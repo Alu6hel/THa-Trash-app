@@ -1,7 +1,7 @@
 // ==============================================================================
-// THa Trash App - Native Alu Waste Optimization Engine (bin_optimizer.alu)
+// THa Trash App - Native Alu Waste Optimization Engine v2.0 (bin_optimizer.alu)
 // High-performance, memory-safe mathematical routing and waste analytics
-// Physics-First Z3 Proved Memory & Bounds Correctness
+// Physics-First Z3 Proved Memory, Bounds & Non-Zero Division Correctness
 // ==============================================================================
 
 extern routine printf(string fmt, ...) -> void;
@@ -84,11 +84,50 @@ routine calculate_disposable_depletion(int stock, int burn_rate) -> int {
     return stock / burn_rate;
 }
 
+// Bayesian Day-of-Week Fill Velocity Modifier (1: Mon, 2: Tue, ..., 5: Fri, 6: Sat, 7: Sun)
+routine calculate_day_adjusted_fill_rate(int base_rate, int day_of_week) -> int {
+    if (day_of_week == 5) { // Friday dining and event surge (+40%)
+        return (base_rate * 14) / 10;
+    }
+    if (day_of_week == 1) { // Monday morning campus reset (+20%)
+        return (base_rate * 12) / 10;
+    }
+    if (day_of_week >= 6) { // Weekend reduction (-30%)
+        return (base_rate * 7) / 10;
+    }
+    return base_rate;
+}
+
+// Clean Facility Score (0 - 100) based on average fullness and overflow incidence
+@requires(max_bins > 0)
+routine calculate_cleanliness_index(int avg_fill_pct, int overflow_count, int max_bins) -> int {
+    int score = 100 - (avg_fill_pct / 2);
+    int overflow_penalty = (overflow_count * 40) / max_bins;
+    score = score - overflow_penalty;
+    if (score < 0) {
+        return 0;
+    }
+    if (score > 100) {
+        return 100;
+    }
+    return score;
+}
+
+// Multi-Truck Partitioning: compute required fleet trucks given total volume
+@requires(truck_capacity_liters > 0)
+routine calculate_required_trucks(int total_liters, int truck_capacity_liters) -> int {
+    int count = (total_liters + truck_capacity_liters - 1) / truck_capacity_liters;
+    if (count < 1) {
+        return 1;
+    }
+    return count;
+}
+
 // --------------------------------------------------------------------------
 // Automated Self-Test Verification Suite
 // --------------------------------------------------------------------------
 routine run_self_tests() -> int {
-    printf("[ALU ENGINE TEST] Starting Alu Waste Management Unit Tests...\n");
+    printf("[ALU ENGINE TEST] Starting Alu Waste Management Unit Tests v2.0...\n");
 
     // Test 1: Overflow calculation
     int h1 = calculate_overflow_hours(80, 5);
@@ -131,7 +170,28 @@ routine run_self_tests() -> int {
     }
     printf("[PASS] Test 5: Disposable inventory depletion verified (20 days)\n");
 
-    printf("[ALU ENGINE TEST] All 5 Alu Engine verification tests PASSED!\n\n");
+    // Test 6: Bayesian Day-of-Week fill rate (10 base on Friday -> 14)
+    int fri_rate = calculate_day_adjusted_fill_rate(10, 5);
+    if (fri_rate != 14) {
+        printf("[FAIL] Friday fill rate expected 14, got %d\n", fri_rate);
+        return 6;
+    }
+    printf("[PASS] Test 6: Bayesian Friday rush rate verified (10 -> 14 %%/hr)\n");
+
+    // Test 7: Cleanliness index & multi-truck partition
+    int clean_score = calculate_cleanliness_index(50, 1, 10); // 100 - 25 - 4 = 71
+    if (clean_score != 71) {
+        printf("[FAIL] Cleanliness index expected 71, got %d\n", clean_score);
+        return 7;
+    }
+    int trucks = calculate_required_trucks(2100, 1000); // 3 trucks
+    if (trucks != 3) {
+        printf("[FAIL] Trucks expected 3, got %d\n", trucks);
+        return 8;
+    }
+    printf("[PASS] Test 7: Cleanliness index (71/100) and Multi-Truck VRP (3 trucks) verified\n");
+
+    printf("[ALU ENGINE TEST] All 7 Alu Engine verification tests PASSED!\n\n");
     return 0;
 }
 
@@ -140,7 +200,7 @@ routine run_self_tests() -> int {
 // --------------------------------------------------------------------------
 routine run_simulation() -> int {
     printf("==================================================================\n");
-    printf("   THA TRASH APP - ALU NATIVE WASTE OPTIMIZATION ENGINE v1.0       \n");
+    printf("   THA TRASH APP - ALU NATIVE WASTE OPTIMIZATION ENGINE v2.0       \n");
     printf("   Physics-First, Z3 Memory-Safe Routing & Telemetry Service      \n");
     printf("==================================================================\n\n");
 
@@ -216,7 +276,6 @@ routine run_simulation() -> int {
     }
 
     // Parallel bubble sort for route sequencing (descending priority)
-    // 4 passes across 4 elements guarantees j+1 < 5 always
     for (int pass = 0; pass < 4; pass = pass + 1) {
         for (int j = 0; j < 4; j = j + 1) {
             if (bin_priority[j] < bin_priority[j + 1]) {
@@ -257,7 +316,10 @@ routine run_simulation() -> int {
     // Environmental calculations
     int diversion = calculate_diversion_rate_pct(750, 1100);
     int co2_saved = calculate_carbon_avoided_kg(420, 280);
+    int clean_score = calculate_cleanliness_index(72, 2, 5);
+
     printf("\n--- Facility Environmental Impact Metrics ---\n");
+    printf("Clean Facility Health Index:  %d/100\n", clean_score);
     printf("Total Landfill Diversion Rate: %d%%\n", diversion);
     printf("Net Greenhouse Gas Avoided:   %d kg CO2e\n", co2_saved);
 

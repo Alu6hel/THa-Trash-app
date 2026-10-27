@@ -25,6 +25,8 @@ export interface TrashBin {
     floor: string;
     roomOrArea: string;
     coordinates?: { lat: number; lng: number };
+    mapX?: number; // 0 - 100 percentage position on floor plan
+    mapY?: number; // 0 - 100 percentage position on floor plan
   };
   stream: WasteStreamType;
   capacityLiters: number;

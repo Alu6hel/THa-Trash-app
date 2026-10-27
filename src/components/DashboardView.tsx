@@ -1,12 +1,13 @@
 // ==============================================================================
 // THa Trash App - Command Center Dashboard (DashboardView.tsx)
+// Real-time telemetry, Clean Facility Health Index, Custodial Shift status,
+// and Alu-prioritized dispatch queue
 // ==============================================================================
 
 import React from 'react';
 import {
   Trash2,
   AlertTriangle,
-  CheckCircle2,
   TrendingUp,
   Leaf,
   Route,
@@ -15,8 +16,15 @@ import {
   Package,
   Layers,
   Cpu,
+  Map,
+  Camera,
+  ShieldCheck,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { TrashBin, DisposableItem, ServiceLogEntry, EnvironmentalMetrics } from '../types';
+import { AluEngineService } from '../services/aluEngineService';
+import { soundService } from '../services/soundService';
 
 interface DashboardViewProps {
   bins: TrashBin[];
@@ -26,6 +34,7 @@ interface DashboardViewProps {
   onNavigateTab: (tab: any) => void;
   onServiceBin: (bin: TrashBin) => void;
   onRunRoute: () => void;
+  onOpenScanner: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -36,10 +45,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateTab,
   onServiceBin,
   onRunRoute,
+  onOpenScanner,
 }) => {
   const overflowingBins = bins.filter((b) => b.currentFillPct >= 85);
   const attentionBins = bins.filter((b) => b.currentFillPct >= 70 && b.currentFillPct < 85);
   const lowStockDisposables = disposables.filter((d) => d.currentStock <= d.restockThreshold);
+
+  // Calculate Clean Facility Health Index (0 - 100) via Alu Engine v2
+  const avgFill = bins.length > 0 ? Math.round(bins.reduce((sum, b) => sum + b.currentFillPct, 0) / bins.length) : 0;
+  const cleanlinessIndex = AluEngineService.calculateCleanlinessIndex(avgFill, overflowingBins.length, bins.length);
 
   // Top 3 urgent bins sorted by Alu Priority Score
   const urgentBins = [...bins].sort((a, b) => b.priorityScore - a.priorityScore).slice(0, 3);
@@ -64,47 +78,60 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-rose-200 text-sm sm:text-base">
-                {overflowingBins.length} Waste Bin(s) at Critical Capacity (≥85%)
+                {overflowingBins.length} Waste Bin(s) at Critical Capacity (&ge;85%)
               </h3>
               <p className="text-xs text-rose-300/80">
-                Alu route optimizer recommends immediate dispatch to avoid floor contamination.
+                Alu route optimizer recommends immediate dispatch to avoid overflow contamination.
               </p>
             </div>
           </div>
-          <button
-            onClick={onRunRoute}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-semibold text-xs tracking-wide shadow-md transition-all flex items-center space-x-2 shrink-0"
-          >
-            <Route className="w-4 h-4" />
-            <span>Dispatch Collection Route</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigateTab('map')}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            >
+              <Map className="w-4 h-4 text-emerald-400" />
+              <span>Locate on Map</span>
+            </button>
+            <button
+              onClick={onRunRoute}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-semibold text-xs tracking-wide shadow-md transition-all flex items-center space-x-2 shrink-0"
+            >
+              <Route className="w-4 h-4" />
+              <span>Dispatch Route</span>
+            </button>
+          </div>
         </div>
       )}
 
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Bins Card */}
+        {/* Clean Facility Score Card */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-mono uppercase tracking-wider">Monitored Bins</span>
-            <Trash2 className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-mono uppercase tracking-wider">Facility Health</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-extrabold text-white">{bins.length}</span>
-            <span className="text-xs text-emerald-400 font-medium">IoT Connected</span>
+            <span className={`text-3xl font-extrabold ${cleanlinessIndex >= 75 ? 'text-emerald-400' : cleanlinessIndex >= 50 ? 'text-amber-400' : 'text-rose-400'}`}>
+              {cleanlinessIndex}/100
+            </span>
+            <span className="text-xs text-slate-400 font-mono">Alu Index</span>
           </div>
-          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-400">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>{bins.length - overflowingBins.length - attentionBins.length} Normal</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-rose-400 font-semibold">{overflowingBins.length} Critical</span>
+          <div className="mt-3 w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div
+              className={`h-1.5 rounded-full transition-all duration-500 ${
+                cleanlinessIndex >= 75 ? 'bg-emerald-500' : cleanlinessIndex >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+              }`}
+              style={{ width: `${cleanlinessIndex}%` }}
+            />
           </div>
         </div>
 
         {/* Diversion Rate Card */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-mono uppercase tracking-wider">Diversion Rate</span>
+            <span className="text-xs font-mono uppercase tracking-wider">Landfill Diversion</span>
             <Leaf className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="flex items-baseline space-x-2">
@@ -115,7 +142,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div
               className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full transition-all duration-500"
               style={{ width: `${Math.min(100, metrics.diversionRatePct)}%` }}
-            ></div>
+            />
+          </div>
+        </div>
+
+        {/* Monitored Bins Card */}
+        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all">
+          <div className="flex items-center justify-between text-slate-400 mb-2">
+            <span className="text-xs font-mono uppercase tracking-wider">Telemetry Bins</span>
+            <Trash2 className="w-4 h-4 text-teal-400" />
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <span className="text-3xl font-extrabold text-white">{bins.length}</span>
+            <span className="text-xs text-emerald-400 font-medium">IoT Active</span>
+          </div>
+          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-400">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
+            <span>{bins.length - overflowingBins.length - attentionBins.length} Normal</span>
+            <span className="text-slate-600">•</span>
+            <span className="text-rose-400 font-semibold">{overflowingBins.length} Critical</span>
           </div>
         </div>
 
@@ -133,20 +178,70 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             EPA WARM verified via Alu Engine
           </p>
         </div>
+      </div>
 
-        {/* Disposables Stock Alert */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-mono uppercase tracking-wider">Disposables Alerts</span>
+      {/* Custodial Operations & Quick Launchpad */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Active Custodial Shift Tracker */}
+        <div className="md:col-span-3 bg-gradient-to-r from-slate-900 to-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-white font-bold text-sm">Active Custodial Shift</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400">
+                  DAY SHIFT (08:00 - 16:00)
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Lead Custodian: <strong className="text-slate-200">Alex Chen</strong> • Serviced Today:{' '}
+                <strong className="text-emerald-400 font-mono">{logs.length} Bins</strong>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onOpenScanner}
+              className="px-3.5 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-semibold flex items-center gap-1.5 transition-all shadow"
+            >
+              <Camera className="w-4 h-4 text-indigo-300" />
+              <span>Laser QR Scanner</span>
+            </button>
+            <button
+              onClick={() => onNavigateTab('map')}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            >
+              <Map className="w-4 h-4 text-emerald-400" />
+              <span>Facility Blueprint Map</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Disposables Quick Stock Status */}
+        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span>Disposables Stock</span>
             <Package className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-extrabold text-white">{lowStockDisposables.length}</span>
-            <span className="text-xs text-amber-400 font-medium">Restock Required</span>
+          <div className="mt-2">
+            <div className="text-xl font-bold text-white">
+              {lowStockDisposables.length > 0 ? (
+                <span className="text-amber-400">{lowStockDisposables.length} Low Stock</span>
+              ) : (
+                <span className="text-emerald-400">All Optimal</span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">{disposables.length} items tracked</p>
           </div>
-          <p className="mt-3 text-[11px] text-slate-400">
-            {disposables.length} total SKUs actively monitored
-          </p>
+          <button
+            onClick={() => onNavigateTab('disposables')}
+            className="text-xs text-indigo-400 hover:text-indigo-300 mt-2 font-medium flex items-center gap-1"
+          >
+            <span>Manage Inventory &rarr;</span>
+          </button>
         </div>
       </div>
 
@@ -171,7 +266,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="space-y-3">
             {urgentBins.map((bin, index) => {
               const isOver = bin.currentFillPct >= 85;
-              const isWarn = bin.currentFillPct >= 70 && !isOver;
               return (
                 <div
                   key={bin.id}
@@ -207,7 +301,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <div className="text-[10px] text-slate-400 font-mono">{bin.capacityLiters} Liters</div>
                     </div>
                     <button
-                      onClick={() => onServiceBin(bin)}
+                      onClick={() => {
+                        soundService.playSuccessChime();
+                        onServiceBin(bin);
+                      }}
                       className="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-all"
                     >
                       Empty Bin
@@ -230,7 +327,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/40">
                 <div className="flex items-center space-x-2.5">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                  <span className="w-3 h-3 rounded-full bg-emerald-500" />
                   <span className="text-xs font-medium text-slate-200">Compost & Organics</span>
                 </div>
                 <span className="text-xs font-mono font-bold text-slate-300">
@@ -240,7 +337,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/40">
                 <div className="flex items-center space-x-2.5">
-                  <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                  <span className="w-3 h-3 rounded-full bg-blue-500" />
                   <span className="text-xs font-medium text-slate-200">Recyclables (Plastics/Paper)</span>
                 </div>
                 <span className="text-xs font-mono font-bold text-slate-300">
@@ -250,7 +347,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/40">
                 <div className="flex items-center space-x-2.5">
-                  <span className="w-3 h-3 rounded-full bg-slate-400"></span>
+                  <span className="w-3 h-3 rounded-full bg-slate-400" />
                   <span className="text-xs font-medium text-slate-200">General Landfill</span>
                 </div>
                 <span className="text-xs font-mono font-bold text-slate-300">
@@ -260,7 +357,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/40">
                 <div className="flex items-center space-x-2.5">
-                  <span className="w-3 h-3 rounded-full bg-rose-500"></span>
+                  <span className="w-3 h-3 rounded-full bg-rose-500" />
                   <span className="text-xs font-medium text-slate-200">Hazardous / Biohazard</span>
                 </div>
                 <span className="text-xs font-mono font-bold text-slate-300">
@@ -270,7 +367,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/40">
                 <div className="flex items-center space-x-2.5">
-                  <span className="w-3 h-3 rounded-full bg-purple-500"></span>
+                  <span className="w-3 h-3 rounded-full bg-purple-500" />
                   <span className="text-xs font-medium text-slate-200">E-Waste & Batteries</span>
                 </div>
                 <span className="text-xs font-mono font-bold text-slate-300">

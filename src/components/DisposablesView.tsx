@@ -18,6 +18,8 @@ import {
   Calendar,
 } from 'lucide-react';
 import { DisposableItem, DisposableCategory, WasteStreamType } from '../types';
+import { AluEngineService } from '../services/aluEngineService';
+import { soundService } from '../services/soundService';
 
 interface DisposablesViewProps {
   items: DisposableItem[];
@@ -81,6 +83,7 @@ export const DisposablesView: React.FC<DisposablesViewProps> = ({
 
   const handleConfirmStockChange = () => {
     if (!selectedItemForUsage || usageAmount <= 0) return;
+    soundService.playSuccessChime();
     const delta = isRestockMode ? usageAmount : -usageAmount;
     onUpdateStock(selectedItemForUsage.id, delta);
     setSelectedItemForUsage(null);
@@ -150,6 +153,64 @@ export const DisposablesView: React.FC<DisposablesViewProps> = ({
           <span>Catalog New Disposable</span>
         </button>
       </div>
+
+      {/* Circular Economy Forecast Banner */}
+      {(() => {
+        const forecast = AluEngineService.forecastDisposableWasteVolume(items);
+        return (
+          <div className="bg-gradient-to-r from-slate-900 to-indigo-950/40 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+                  <Leaf className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                    Circular Economy Daily Inflow Forecaster
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 font-bold">
+                      ALU PHYSICS MODEL
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Predicts downstream receptacle fill volume based on active consumable burn rates
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+                <div className="bg-slate-950/70 border border-slate-800 px-3 py-1.5 rounded-xl">
+                  <span className="text-slate-400 block text-[10px]">Predicted Daily Inflow</span>
+                  <span className="text-emerald-400 font-bold text-base">{forecast.totalDailyKg} kg/day</span>
+                </div>
+                <div className="bg-slate-950/70 border border-slate-800 px-3 py-1.5 rounded-xl">
+                  <span className="text-slate-400 block text-[10px]">Scope 3 Consumable CO₂e</span>
+                  <span className="text-teal-300 font-bold text-base">{(forecast.totalDailyCo2Grams / 1000).toFixed(1)} kg GHG</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Stream Inflow Distribution */}
+            <div className="mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="flex items-center justify-between bg-slate-950/40 px-2.5 py-1.5 rounded-lg border border-slate-800/50">
+                <span className="text-emerald-400 font-medium">Compost:</span>
+                <span className="font-mono text-slate-200">{forecast.breakdownByStream.compost} kg/d</span>
+              </div>
+              <div className="flex items-center justify-between bg-slate-950/40 px-2.5 py-1.5 rounded-lg border border-slate-800/50">
+                <span className="text-blue-400 font-medium">Recyclables:</span>
+                <span className="font-mono text-slate-200">{forecast.breakdownByStream.recyclables} kg/d</span>
+              </div>
+              <div className="flex items-center justify-between bg-slate-950/40 px-2.5 py-1.5 rounded-lg border border-slate-800/50">
+                <span className="text-rose-400 font-medium">Medical/Hazard:</span>
+                <span className="font-mono text-slate-200">{forecast.breakdownByStream.hazardous} kg/d</span>
+              </div>
+              <div className="flex items-center justify-between bg-slate-950/40 px-2.5 py-1.5 rounded-lg border border-slate-800/50">
+                <span className="text-slate-400 font-medium">General Landfill:</span>
+                <span className="font-mono text-slate-200">{forecast.breakdownByStream.general} kg/d</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Filter and Search */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center gap-3">

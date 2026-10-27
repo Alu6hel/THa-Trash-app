@@ -11,11 +11,14 @@ import {
   RefreshCw,
   Sliders,
   Cpu,
-  AlertTriangle,
   Radio,
+  Map,
+  Camera,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 
-export type NavTab = 'dashboard' | 'bins' | 'disposables' | 'routes' | 'analytics';
+export type NavTab = 'dashboard' | 'bins' | 'disposables' | 'routes' | 'map' | 'analytics';
 
 interface HeaderProps {
   activeTab: NavTab;
@@ -26,6 +29,9 @@ interface HeaderProps {
   onToggleSimulation: () => void;
   onOpenDataModal: () => void;
   onTriggerAluCheck: () => void;
+  onOpenScanner: () => void;
+  isSoundMuted: boolean;
+  onToggleSound: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -37,6 +43,9 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSimulation,
   onOpenDataModal,
   onTriggerAluCheck,
+  onOpenScanner,
+  isSoundMuted,
+  onToggleSound,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
@@ -54,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                   <Cpu className="w-3 h-3 mr-1" />
-                  ALU v1.0
+                  ALU v2.0
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
@@ -64,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Navigation Tabs */}
-          <nav className="flex items-center space-x-1 sm:space-x-2">
+          <nav className="flex items-center space-x-1 sm:space-x-1.5">
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
@@ -123,6 +132,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab('map')}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+                activeTab === 'map'
+                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              <Map className="w-4 h-4" />
+              <span>Map</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('analytics')}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
                 activeTab === 'analytics'
@@ -136,7 +157,26 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
 
           {/* Quick Actions & Telemetry Controls */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            {/* Quick Camera Scanner Trigger */}
+            <button
+              onClick={onOpenScanner}
+              title="Open Barcode & QR Tag Scanner"
+              className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/30 hover:text-white transition-all flex items-center gap-1.5 text-xs font-semibold"
+            >
+              <Camera className="w-4 h-4 text-indigo-400" />
+              <span className="hidden xl:inline">Scan Tag</span>
+            </button>
+
+            {/* Sound Mute / Unmute Toggle */}
+            <button
+              onClick={onToggleSound}
+              title={isSoundMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+              className="p-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white transition-all"
+            >
+              {isSoundMuted ? <VolumeX className="w-4 h-4 text-slate-500" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+            </button>
+
             {/* Simulation Toggle */}
             <button
               onClick={onToggleSimulation}
@@ -148,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               <Radio className={`w-3.5 h-3.5 ${isSimulating ? 'text-emerald-400 animate-pulse' : ''}`} />
-              <span className="hidden md:inline">{isSimulating ? 'IoT Live' : 'IoT Idle'}</span>
+              <span className="hidden lg:inline">{isSimulating ? 'IoT Live' : 'IoT Idle'}</span>
             </button>
 
             {/* Alu Engine Force Recalculate */}
@@ -163,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Data Management Modal */}
             <button
               onClick={onOpenDataModal}
-              title="Export, Import, or Reset Data"
+              title="Export, Import, Facility Presets, or Reset Data"
               className="p-2 rounded-lg bg-slate-800/80 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white transition-all"
             >
               <Sliders className="w-4 h-4" />

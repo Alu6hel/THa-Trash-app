@@ -21,7 +21,7 @@ export const SEED_BINS: TrashBin[] = [
     numericId: 101,
     code: 'BIN-CAFE-01',
     name: 'Cafeteria Compost & Food Scraps',
-    location: { building: 'Dining Commons', floor: '1st Floor', roomOrArea: 'Tray Drop Area' },
+    location: { building: 'Dining Commons', floor: '1st Floor', roomOrArea: 'Tray Drop Area', mapX: 25, mapY: 35 },
     stream: 'compost',
     capacityLiters: 240,
     currentFillPct: 92,
@@ -40,7 +40,7 @@ export const SEED_BINS: TrashBin[] = [
     numericId: 102,
     code: 'BIN-LAB-04',
     name: 'Biotech Lab Contaminated Waste',
-    location: { building: 'Science Pavilion', floor: '3rd Floor', roomOrArea: 'Bio-Safety Room 304' },
+    location: { building: 'Science Pavilion', floor: '3rd Floor', roomOrArea: 'Bio-Safety Room 304', mapX: 75, mapY: 28 },
     stream: 'hazardous',
     capacityLiters: 120,
     currentFillPct: 78,
@@ -59,7 +59,7 @@ export const SEED_BINS: TrashBin[] = [
     numericId: 103,
     code: 'BIN-QUAD-02',
     name: 'Main Quad Outdoor General Waste',
-    location: { building: 'Central Plaza', floor: 'Ground', roomOrArea: 'Breezeway North' },
+    location: { building: 'Central Plaza', floor: 'Ground', roomOrArea: 'Breezeway North', mapX: 50, mapY: 55 },
     stream: 'general',
     capacityLiters: 360,
     currentFillPct: 88,
@@ -78,7 +78,7 @@ export const SEED_BINS: TrashBin[] = [
     numericId: 104,
     code: 'BIN-LIB-01',
     name: 'Library Mixed Paper & Cardboard',
-    location: { building: 'W.E.B. Library', floor: '2nd Floor', roomOrArea: 'Study Commons' },
+    location: { building: 'W.E.B. Library', floor: '2nd Floor', roomOrArea: 'Study Commons', mapX: 30, mapY: 75 },
     stream: 'recyclables',
     capacityLiters: 240,
     currentFillPct: 45,
@@ -97,7 +97,7 @@ export const SEED_BINS: TrashBin[] = [
     numericId: 105,
     code: 'BIN-ENG-03',
     name: 'Robotics Lab E-Waste & Batteries',
-    location: { building: 'Turing Hall', floor: 'Basement', roomOrArea: 'Makerspace B12' },
+    location: { building: 'Turing Hall', floor: 'Basement', roomOrArea: 'Makerspace B12', mapX: 82, mapY: 72 },
     stream: 'ewaste',
     capacityLiters: 180,
     currentFillPct: 62,
@@ -116,7 +116,7 @@ export const SEED_BINS: TrashBin[] = [
     numericId: 106,
     code: 'BIN-GYM-01',
     name: 'Athletics Center Beverage Containers',
-    location: { building: 'Recreation Center', floor: '1st Floor', roomOrArea: 'Gym Entrance' },
+    location: { building: 'Recreation Center', floor: '1st Floor', roomOrArea: 'Gym Entrance', mapX: 62, mapY: 42 },
     stream: 'recyclables',
     capacityLiters: 240,
     currentFillPct: 84,
@@ -381,12 +381,229 @@ export class StorageService {
     await this.setWithFallback(KEYS.ACTIVE_ROUTE, route);
   }
 
-  public static async resetToDefaults(): Promise<{
+  public static async loadFacilityPreset(preset: 'university' | 'hospital' | 'tech_hq' | 'stadium'): Promise<{
     bins: TrashBin[];
     disposables: DisposableItem[];
     logs: ServiceLogEntry[];
   }> {
-    await this.saveBins(SEED_BINS);
+    let presetBins: TrashBin[] = SEED_BINS;
+
+    if (preset === 'hospital') {
+      presetBins = [
+        {
+          id: 'bin-h1',
+          numericId: 301,
+          code: 'BIN-SURG-01',
+          name: 'Operating Theater Surgical Biohazard',
+          location: { building: 'Pavilion A', floor: '3rd Floor', roomOrArea: 'OR Suite 4', mapX: 30, mapY: 30 },
+          stream: 'hazardous',
+          capacityLiters: 240,
+          currentFillPct: 88,
+          fillRatePerHour: 8,
+          lastEmptiedAt: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+          status: 'overflowing',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['surgical', 'biohazard', 'urgent'],
+        },
+        {
+          id: 'bin-h2',
+          numericId: 302,
+          code: 'BIN-PHARM-02',
+          name: 'Inpatient Pharmacy Chemical Disposal',
+          location: { building: 'Pavilion B', floor: '1st Floor', roomOrArea: 'Clean Room 110', mapX: 70, mapY: 25 },
+          stream: 'hazardous',
+          capacityLiters: 120,
+          currentFillPct: 65,
+          fillRatePerHour: 3,
+          lastEmptiedAt: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 10 * 3600 * 1000).toISOString(),
+          status: 'normal',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['pharmaceutical', 'controlled'],
+        },
+        {
+          id: 'bin-h3',
+          numericId: 303,
+          code: 'BIN-ICU-03',
+          name: 'Intensive Care Medical PPE & Gowns',
+          location: { building: 'Pavilion A', floor: '2nd Floor', roomOrArea: 'ICU Central', mapX: 50, mapY: 60 },
+          stream: 'general',
+          capacityLiters: 360,
+          currentFillPct: 92,
+          fillRatePerHour: 6,
+          lastEmptiedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 1 * 3600 * 1000).toISOString(),
+          status: 'overflowing',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['icu', 'ppe', 'high-volume'],
+        },
+        {
+          id: 'bin-h4',
+          numericId: 304,
+          code: 'BIN-CAFEMED-04',
+          name: 'Dietary & Nutrition Compost Station',
+          location: { building: 'Support Services', floor: 'Ground', roomOrArea: 'Kitchen Scraps', mapX: 20, mapY: 70 },
+          stream: 'compost',
+          capacityLiters: 240,
+          currentFillPct: 74,
+          fillRatePerHour: 4,
+          lastEmptiedAt: new Date(Date.now() - 10 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 4 * 3600 * 1000).toISOString(),
+          status: 'attention',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['organics', 'cafeteria'],
+        },
+      ];
+    } else if (preset === 'tech_hq') {
+      presetBins = [
+        {
+          id: 'bin-t1',
+          numericId: 401,
+          code: 'BIN-DATACENTER-01',
+          name: 'Main Datacenter Server Racks E-Waste',
+          location: { building: 'Building Alpha', floor: 'Basement', roomOrArea: 'Server Hall 1', mapX: 25, mapY: 30 },
+          stream: 'ewaste',
+          capacityLiters: 240,
+          currentFillPct: 82,
+          fillRatePerHour: 3,
+          lastEmptiedAt: new Date(Date.now() - 20 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 4 * 3600 * 1000).toISOString(),
+          status: 'attention',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['datacenter', 'electronics', 'confidential'],
+        },
+        {
+          id: 'bin-t2',
+          numericId: 402,
+          code: 'BIN-KITCHEN-02',
+          name: 'Microkitchen Cold Brew & Snack Compost',
+          location: { building: 'Building Beta', floor: '3rd Floor', roomOrArea: 'Lounge West', mapX: 65, mapY: 35 },
+          stream: 'compost',
+          capacityLiters: 240,
+          currentFillPct: 94,
+          fillRatePerHour: 7,
+          lastEmptiedAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 1 * 3600 * 1000).toISOString(),
+          status: 'overflowing',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['coffee-grounds', 'food-scraps', 'microkitchen'],
+        },
+        {
+          id: 'bin-t3',
+          numericId: 403,
+          code: 'BIN-DESIGN-03',
+          name: 'Hardware Design 3D Filaments & Plastics',
+          location: { building: 'Building Beta', floor: '1st Floor', roomOrArea: 'Prototyping Bay', mapX: 50, mapY: 55 },
+          stream: 'recyclables',
+          capacityLiters: 360,
+          currentFillPct: 72,
+          fillRatePerHour: 4,
+          lastEmptiedAt: new Date(Date.now() - 16 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 6 * 3600 * 1000).toISOString(),
+          status: 'attention',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['prototyping', 'polymers', 'hardware'],
+        },
+        {
+          id: 'bin-t4',
+          numericId: 404,
+          code: 'BIN-BATTERY-05',
+          name: 'Autonomous Vehicle Lab Lithium Cells',
+          location: { building: 'Robotics Wing', floor: 'Ground', roomOrArea: 'Bay 12', mapX: 78, mapY: 70 },
+          stream: 'ewaste',
+          capacityLiters: 120,
+          currentFillPct: 68,
+          fillRatePerHour: 2,
+          lastEmptiedAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
+          status: 'normal',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['lithium', 'batteries', 'high-voltage'],
+        },
+      ];
+    } else if (preset === 'stadium') {
+      presetBins = [
+        {
+          id: 'bin-s1',
+          numericId: 501,
+          code: 'BIN-GATE-A',
+          name: 'North Gate Concourse Beverage Cans',
+          location: { building: 'Main Arena', floor: 'Concourse 1', roomOrArea: 'Section 104', mapX: 20, mapY: 40 },
+          stream: 'recyclables',
+          capacityLiters: 400,
+          currentFillPct: 96,
+          fillRatePerHour: 15,
+          lastEmptiedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 1 * 3600 * 1000).toISOString(),
+          status: 'overflowing',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['stadium', 'beverage-cans', 'event-rush'],
+        },
+        {
+          id: 'bin-s2',
+          numericId: 502,
+          code: 'BIN-GATE-B',
+          name: 'South Gate Concourse Plastic Cups',
+          location: { building: 'Main Arena', floor: 'Concourse 1', roomOrArea: 'Section 122', mapX: 80, mapY: 40 },
+          stream: 'recyclables',
+          capacityLiters: 400,
+          currentFillPct: 91,
+          fillRatePerHour: 14,
+          lastEmptiedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 1 * 3600 * 1000).toISOString(),
+          status: 'overflowing',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['stadium', 'plastics', 'event-rush'],
+        },
+        {
+          id: 'bin-s3',
+          numericId: 503,
+          code: 'BIN-FOODCOURT',
+          name: 'VIP Club Food Scraps & Compost',
+          location: { building: 'Arena Club', floor: '2nd Floor', roomOrArea: 'Suite Catering', mapX: 50, mapY: 25 },
+          stream: 'compost',
+          capacityLiters: 360,
+          currentFillPct: 86,
+          fillRatePerHour: 8,
+          lastEmptiedAt: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+          status: 'overflowing',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['catering', 'vip', 'organics'],
+        },
+        {
+          id: 'bin-s4',
+          numericId: 504,
+          code: 'BIN-TAILGATE',
+          name: 'South Parking Plaza Landfill Dumpster',
+          location: { building: 'Outer Perimeter', floor: 'Ground', roomOrArea: 'Lot 4 North', mapX: 50, mapY: 80 },
+          stream: 'general',
+          capacityLiters: 600,
+          currentFillPct: 85,
+          fillRatePerHour: 10,
+          lastEmptiedAt: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+          nextScheduledPickup: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+          status: 'overflowing',
+          priorityScore: 0,
+          hoursUntilOverflow: 0,
+          tags: ['tailgate', 'outdoor', 'high-capacity'],
+        },
+      ];
+    }
+
+    await this.saveBins(presetBins);
     await this.saveDisposables(SEED_DISPOSABLES);
     await this.saveLogs(SEED_LOGS);
     await this.saveActiveRoute(null);
@@ -395,6 +612,14 @@ export class StorageService {
     const disposables = await this.loadDisposables();
     const logs = await this.loadLogs();
     return { bins, disposables, logs };
+  }
+
+  public static async resetToDefaults(): Promise<{
+    bins: TrashBin[];
+    disposables: DisposableItem[];
+    logs: ServiceLogEntry[];
+  }> {
+    return this.loadFacilityPreset('university');
   }
 
   public static async exportAll(): Promise<string> {

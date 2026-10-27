@@ -8,14 +8,17 @@ import { DashboardView } from './components/DashboardView';
 import { BinManagementView } from './components/BinManagementView';
 import { DisposablesView } from './components/DisposablesView';
 import { RouteOptimizerView } from './components/RouteOptimizerView';
+import { FacilityMapView } from './components/FacilityMapView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { ServiceModal } from './components/ServiceModal';
 import { QRTagModal } from './components/QRTagModal';
 import { DataModal } from './components/DataModal';
+import { ScannerModal } from './components/ScannerModal';
 
 import { TrashBin, DisposableItem, ServiceLogEntry, CollectionRoute } from './types';
 import { StorageService } from './services/storageService';
 import { AluEngineService } from './services/aluEngineService';
+import { soundService } from './services/soundService';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
@@ -28,6 +31,8 @@ export const App: React.FC = () => {
   const [selectedBinForService, setSelectedBinForService] = useState<TrashBin | null>(null);
   const [selectedBinForQR, setSelectedBinForQR] = useState<TrashBin | null>(null);
   const [isDataModalOpen, setIsDataModalOpen] = useState<boolean>(false);
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+  const [isSoundMuted, setIsSoundMuted] = useState<boolean>(soundService.isMuted());
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Initial Data Load
@@ -138,9 +143,12 @@ export const App: React.FC = () => {
       newBinData.lastEmptiedAt,
       newBinData.fillRatePerHour
     );
-    const overflow = AluEngineService.calculateOverflowHours(newBinData.currentFillPct, newBinData.fillRatePerHour);
+    const overflow = AluEngineService.calculateOverflowHours(
+      newBinData.currentFillPct,
+      newBinData.fillRatePerHour
+    );
 
-    const completeBin: TrashBin = {
+    const newBin: TrashBin = {
       ...newBinData,
       id,
       numericId,
@@ -148,49 +156,85 @@ export const App: React.FC = () => {
       hoursUntilOverflow: overflow,
     };
 
-    setBins((prev) => [...prev, completeBin]);
+    setBins((prev) => [newBin, ...prev]);
+    soundService.playSuccessChime();
   };
 
   const handleUpdateBin = (updatedBin: TrashBin) => {
-    setBins((prev) => prev.map((b) => (b.id === updatedBin.id ? updatedBin : b)));
+    const priority = AluEngineService.calculateBinPriority(
+      updatedBin.currentFillPct,
+      updatedBin.stream,
+      updatedBin.lastEmptiedAt,
+      updatedBin.fillRatePerHour
+    );
+    const overflow = AluEngineService.calculateOverflowHours(
+      updatedBin.currentFillPct,
+      updatedBin.fillRatePerHour
+    );
+
+    const recomputed = {
+      ...updatedBin,
+      priorityScore: priority,
+      hoursUntilOverflow: overflow,
+    };
+
+    setBins((prev) => prev.map((b) => (b.id === recomputed.id ? recomputed : b)));
+    soundService.playSuccessChime();
   };
 
   const handleDeleteBin = (id: string) => {
     setBins((prev) => prev.filter((b) => b.id !== id));
   };
 
+  const handleUpdateBinCoordinates = async (binId: string, mapX: number, mapY: number) => {
+    setBins((prev) =>
+      prev.map((b) =>
+        b.id === binId
+          ? {
+              ...b,
+              location: {
+                ...b.location,
+                mapX,
+                mapY,
+              },
+            }
+          : b
+      )
+    );
+  };
+
   // Handlers: Disposables
-  const handleAddDisposable = (newItemData: any) => {
+  const handleAddDisposable = (newItem: any) => {
     const id = `disp-${Date.now()}`;
     const numericId = 200 + disposables.length + 1;
     const daysRemaining = AluEngineService.calculateDisposableDepletion(
-      newItemData.currentStock,
-      newItemData.dailyBurnRate
+      newItem.currentStock,
+      newItem.dailyBurnRate
     );
 
-    const completeItem: DisposableItem = {
-      ...newItemData,
+    const item: DisposableItem = {
+      ...newItem,
       id,
       numericId,
       daysRemaining,
     };
 
-    setDisposables((prev) => [...prev, completeItem]);
+    setDisposables((prev) => [item, ...prev]);
+    soundService.playSuccessChime();
   };
 
-  const handleUpdateStock = (id: string, delta: number) => {
+  const handleUpdateStock = (id: string, delta: number, note?: string) => {
     setDisposables((prev) =>
       prev.map((item) => {
-        if (item.id === id) {
-          const newStock = Math.max(0, item.currentStock + delta);
-          const days = AluEngineService.calculateDisposableDepletion(newStock, item.dailyBurnRate);
-          return {
-            ...item,
-            currentStock: newStock,
-            daysRemaining: days,
-          };
-        }
-        return item;
+        if (item.id !== id) return item;
+        const newStock = Math.max(0, item.currentStock + delta);
+        const days = AluEngineService.calculateDisposableDepletion(newStock, item.dailyBurnRate);
+        return {
+          ...item,
+          currentStock: newStock,
+          daysRemaining: days,
+          lastRestockedAt: delta > 0 ? new Date().toISOString() : item.lastRestockedAt,
+        };
       })
     );
   };
@@ -199,8 +243,8 @@ export const App: React.FC = () => {
     setDisposables((prev) => prev.filter((d) => d.id !== id));
   };
 
-  // Service / Empty Action
-  const handleConfirmService = (logData: any) => {
+  // Handlers: Service Log & Route
+  const handleConfirmService = (logData: Omit<ServiceLogEntry, 'id' | 'timestamp'>) => {
     const newLog: ServiceLogEntry = {
       ...logData,
       id: `log-${Date.now()}`,
@@ -209,91 +253,86 @@ export const App: React.FC = () => {
 
     setLogs((prev) => [newLog, ...prev]);
 
-    // Reset the bin to 0% fill
+    // Reset bin fill level
     setBins((prev) =>
       prev.map((b) => {
-        if (b.id === logData.binId) {
-          return {
-            ...b,
-            currentFillPct: 0,
-            status: 'normal',
-            lastEmptiedAt: new Date().toISOString(),
-            priorityScore: AluEngineService.calculateBinPriority(0, b.stream, new Date().toISOString(), b.fillRatePerHour),
-            hoursUntilOverflow: AluEngineService.calculateOverflowHours(0, b.fillRatePerHour),
-          };
-        }
-        return b;
+        if (b.id !== logData.binId) return b;
+        return {
+          ...b,
+          currentFillPct: 0,
+          status: 'normal',
+          lastEmptiedAt: new Date().toISOString(),
+          priorityScore: AluEngineService.calculateBinPriority(0, b.stream, new Date().toISOString(), b.fillRatePerHour),
+          hoursUntilOverflow: AluEngineService.calculateOverflowHours(0, b.fillRatePerHour),
+        };
       })
     );
 
-    // Also mark in active route if present
+    // If active route exists, mark stop serviced if matched
     if (activeRoute) {
       setActiveRoute({
         ...activeRoute,
         stops: activeRoute.stops.map((s) => (s.binId === logData.binId ? { ...s, isServiced: true } : s)),
+        completedStops: activeRoute.stops.filter((s) => s.binId === logData.binId || s.isServiced).length,
       });
     }
+
+    soundService.playSuccessChime();
+    setSelectedBinForService(null);
   };
 
-  // Route Generation
   const handleGenerateRoute = () => {
     const stops = AluEngineService.optimizeRoute(bins);
-    const totalVolume = stops.reduce((sum, s) => {
-      const b = bins.find((x) => x.id === s.binId);
-      return sum + (b ? Math.round((b.capacityLiters * b.currentFillPct) / 100) : 0);
+    const totalVolume = stops.reduce((acc, s) => {
+      const b = bins.find((item) => item.id === s.binId);
+      const cap = b ? b.capacityLiters : 200;
+      return acc + Math.round((s.currentFillPct / 100) * cap);
     }, 0);
 
     const newRoute: CollectionRoute = {
-      id: `ROUTE-${Date.now().toString().slice(-6)}`,
-      name: `Alu Campus Collection Run (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+      id: `route-${new Date().toISOString().slice(0, 10)}-${Math.floor(Math.random() * 900 + 100)}`,
+      name: `Alu Dynamic Collection Manifest (${new Date().toLocaleTimeString()})`,
       generatedAt: new Date().toISOString(),
       stops,
       totalBins: stops.length,
       completedStops: 0,
-      estimatedMinutes: Math.round(stops.length * 5.5),
+      estimatedMinutes: Math.max(15, stops.length * 6),
       totalVolumeToCollectLiters: totalVolume,
       status: 'pending',
     };
 
     setActiveRoute(newRoute);
+    soundService.playScanBeep();
     setActiveTab('routes');
   };
 
   const handleToggleStopServiced = (stopOrder: number) => {
     if (!activeRoute) return;
-    const targetStop = activeRoute.stops.find((s) => s.stopOrder === stopOrder);
-    if (!targetStop) return;
-
-    const nextServiced = !targetStop.isServiced;
-
-    setActiveRoute({
-      ...activeRoute,
-      stops: activeRoute.stops.map((s) =>
-        s.stopOrder === stopOrder
-          ? {
-              ...s,
-              isServiced: nextServiced,
-              servicedAt: nextServiced ? new Date().toISOString() : undefined,
-            }
-          : s
-      ),
+    const updatedStops = activeRoute.stops.map((stop) => {
+      if (stop.stopOrder === stopOrder) {
+        const nextState = !stop.isServiced;
+        // Also zero out bin fill if marked serviced
+        if (nextState) {
+          setBins((prev) =>
+            prev.map((b) => (b.id === stop.binId ? { ...b, currentFillPct: 0, status: 'normal', lastEmptiedAt: new Date().toISOString() } : b))
+          );
+        }
+        return {
+          ...stop,
+          isServiced: nextState,
+          servicedAt: nextState ? new Date().toISOString() : undefined,
+        };
+      }
+      return stop;
     });
 
-    // If marked as serviced, empty bin
-    if (nextServiced) {
-      const binToEmpty = bins.find((b) => b.id === targetStop.binId);
-      if (binToEmpty) {
-        handleConfirmService({
-          binId: binToEmpty.id,
-          binCode: binToEmpty.code,
-          stream: binToEmpty.stream,
-          weightCollectedKg: Math.max(5, Math.round(((binToEmpty.capacityLiters * binToEmpty.currentFillPct) / 100) * 0.22)),
-          volumeCollectedLiters: Math.round((binToEmpty.capacityLiters * binToEmpty.currentFillPct) / 100),
-          technician: 'Field Collector',
-          hadContamination: false,
-        });
-      }
-    }
+    const completed = updatedStops.filter((s) => s.isServiced).length;
+    setActiveRoute({
+      ...activeRoute,
+      stops: updatedStops,
+      completedStops: completed,
+      status: completed === updatedStops.length ? 'completed' : 'in_progress',
+    });
   };
 
   const handleCompleteRoute = () => {
@@ -308,6 +347,7 @@ export const App: React.FC = () => {
         hoursUntilOverflow: AluEngineService.calculateOverflowHours(b.currentFillPct, b.fillRatePerHour),
       }))
     );
+    soundService.playSuccessChime();
   };
 
   const handleDataReset = async () => {
@@ -320,6 +360,14 @@ export const App: React.FC = () => {
     setActiveRoute(null);
   };
 
+  const handleToggleSound = () => {
+    const muted = soundService.toggleMute();
+    setIsSoundMuted(muted);
+    if (!muted) {
+      soundService.playScanBeep();
+    }
+  };
+
   const overflowingCount = bins.filter((b) => b.currentFillPct >= 85).length;
   const lowStockCount = disposables.filter((d) => d.currentStock <= d.restockThreshold).length;
 
@@ -327,8 +375,8 @@ export const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center text-white font-mono text-sm">
         <div className="flex items-center space-x-3">
-          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <span>Booting THa Trash App & Alu Engine...</span>
+          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <span>Booting THa Trash App & Alu Engine v2.0...</span>
         </div>
       </div>
     );
@@ -345,6 +393,9 @@ export const App: React.FC = () => {
         onToggleSimulation={() => setIsSimulating(!isSimulating)}
         onOpenDataModal={() => setIsDataModalOpen(true)}
         onTriggerAluCheck={handleForceAluCheck}
+        onOpenScanner={() => setIsScannerOpen(true)}
+        isSoundMuted={isSoundMuted}
+        onToggleSound={handleToggleSound}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -357,6 +408,7 @@ export const App: React.FC = () => {
             onNavigateTab={setActiveTab}
             onServiceBin={(b) => setSelectedBinForService(b)}
             onRunRoute={handleGenerateRoute}
+            onOpenScanner={() => setIsScannerOpen(true)}
           />
         )}
 
@@ -386,6 +438,17 @@ export const App: React.FC = () => {
             onGenerateRoute={handleGenerateRoute}
             onToggleStopServiced={handleToggleStopServiced}
             onCompleteRoute={handleCompleteRoute}
+            onNavigateToMap={() => setActiveTab('map')}
+          />
+        )}
+
+        {activeTab === 'map' && (
+          <FacilityMapView
+            bins={bins}
+            activeRoute={activeRoute}
+            onSelectBinForService={(b) => setSelectedBinForService(b)}
+            onUpdateBinCoordinates={handleUpdateBinCoordinates}
+            onNavigateToRoute={() => setActiveTab('routes')}
           />
         )}
 
@@ -407,6 +470,17 @@ export const App: React.FC = () => {
 
       {isDataModalOpen && (
         <DataModal onClose={() => setIsDataModalOpen(false)} onDataReset={handleDataReset} />
+      )}
+
+      {isScannerOpen && (
+        <ScannerModal
+          isOpen={isScannerOpen}
+          onClose={() => setIsScannerOpen(false)}
+          bins={bins}
+          disposables={disposables}
+          onScanBin={(bin) => setSelectedBinForService(bin)}
+          onScanDisposable={() => setActiveTab('disposables')}
+        />
       )}
     </div>
   );
