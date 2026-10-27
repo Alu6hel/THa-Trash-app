@@ -1,0 +1,277 @@
+// ==============================================================================
+// THa Trash App - Native Alu Waste Optimization Engine (bin_optimizer.alu)
+// High-performance, memory-safe mathematical routing and waste analytics
+// Physics-First Z3 Proved Memory & Bounds Correctness
+// ==============================================================================
+
+extern routine printf(string fmt, ...) -> void;
+
+// Waste Stream Codes:
+// 1 = General (Landfill)
+// 2 = Recyclables (Plastics, Metals, Paper)
+// 3 = Compost (Organics, Food Waste)
+// 4 = Hazardous / Biohazard / Medical
+// 5 = E-Waste (Electronics, Batteries)
+
+// Predict hours until a bin reaches 100% capacity
+@requires(fill_rate_per_hour > 0)
+routine calculate_overflow_hours(int current_fill_pct, int fill_rate_per_hour) -> int {
+    if (current_fill_pct >= 100) {
+        return 0;
+    }
+    int remaining_pct = 100 - current_fill_pct;
+    int hours = remaining_pct / fill_rate_per_hour;
+    return hours;
+}
+
+// Compute multi-variable priority score for garbage collection dispatch (0 - 1000)
+routine calculate_bin_priority(int current_fill_pct, int waste_type, int hours_ago, int fill_rate) -> int {
+    int score = current_fill_pct * 6; // up to 600 from fill level
+
+    // Hazardous stream emergency priority
+    if (waste_type == 4) {
+        score = score + 250;
+    }
+    // Compost / organics decomposition & odor priority
+    if (waste_type == 3) {
+        score = score + 120;
+    }
+    // Recyclables
+    if (waste_type == 2) {
+        score = score + 80;
+    }
+    // General waste
+    if (waste_type == 1) {
+        score = score + 50;
+    }
+    // E-waste
+    if (waste_type == 5) {
+        score = score + 90;
+    }
+
+    // Time decay bonus: bins waiting longer gain priority
+    int time_bonus = hours_ago * 2;
+    if (time_bonus > 150) {
+        time_bonus = 150;
+    }
+    score = score + time_bonus;
+
+    // Rapid filling bonus
+    if (fill_rate > 5) {
+        score = score + (fill_rate * 4);
+    }
+
+    return score;
+}
+
+// Calculate Landfill Diversion Rate (Percentage 0-100)
+@requires(total_kg > 0)
+routine calculate_diversion_rate_pct(int diverted_kg, int total_kg) -> int {
+    int rate = (diverted_kg * 100) / total_kg;
+    return rate;
+}
+
+// Calculate CO2e avoided in kilograms (EPA WARM factors: 2.8x for recycling, 0.5x for compost)
+routine calculate_carbon_avoided_kg(int recycled_kg, int compost_kg) -> int {
+    int co2_recycled = (recycled_kg * 28) / 10;
+    int co2_compost = (compost_kg * 5) / 10;
+    return co2_recycled + co2_compost;
+}
+
+// Estimate days remaining for disposable stock
+@requires(burn_rate > 0)
+routine calculate_disposable_depletion(int stock, int burn_rate) -> int {
+    return stock / burn_rate;
+}
+
+// --------------------------------------------------------------------------
+// Automated Self-Test Verification Suite
+// --------------------------------------------------------------------------
+routine run_self_tests() -> int {
+    printf("[ALU ENGINE TEST] Starting Alu Waste Management Unit Tests...\n");
+
+    // Test 1: Overflow calculation
+    int h1 = calculate_overflow_hours(80, 5);
+    if (h1 != 4) {
+        printf("[FAIL] Overflow hours expected 4, got %d\n", h1);
+        return 1;
+    }
+    printf("[PASS] Test 1: Overflow prediction correctly calculated (4 hours)\n");
+
+    // Test 2: Priority scoring
+    int p_haz = calculate_bin_priority(90, 4, 12, 6);
+    int p_gen = calculate_bin_priority(90, 1, 12, 6);
+    if (p_haz <= p_gen) {
+        printf("[FAIL] Hazardous waste must have higher priority than general waste (%d vs %d)\n", p_haz, p_gen);
+        return 2;
+    }
+    printf("[PASS] Test 2: Hazardous stream priority weighting verified (%d > %d)\n", p_haz, p_gen);
+
+    // Test 3: Diversion rate (200 diverted / 300 total = 66%)
+    int div = calculate_diversion_rate_pct(200, 300);
+    if (div != 66) {
+        printf("[FAIL] Diversion rate expected 66, got %d\n", div);
+        return 3;
+    }
+    printf("[PASS] Test 3: Landfill diversion rate verified (66%%)\n");
+
+    // Test 4: Carbon savings (100 * 2.8 + 200 * 0.5 = 280 + 100 = 380 kg CO2e)
+    int co2 = calculate_carbon_avoided_kg(100, 200);
+    if (co2 != 380) {
+        printf("[FAIL] Carbon savings expected 380, got %d\n", co2);
+        return 4;
+    }
+    printf("[PASS] Test 4: Carbon offset calculation verified (380 kg CO2e)\n");
+
+    // Test 5: Disposable depletion (500 / 25 = 20 days)
+    int days = calculate_disposable_depletion(500, 25);
+    if (days != 20) {
+        printf("[FAIL] Disposable days expected 20, got %d\n", days);
+        return 5;
+    }
+    printf("[PASS] Test 5: Disposable inventory depletion verified (20 days)\n");
+
+    printf("[ALU ENGINE TEST] All 5 Alu Engine verification tests PASSED!\n\n");
+    return 0;
+}
+
+// --------------------------------------------------------------------------
+// Full Telemetry Simulation & Route Optimization
+// --------------------------------------------------------------------------
+routine run_simulation() -> int {
+    printf("==================================================================\n");
+    printf("   THA TRASH APP - ALU NATIVE WASTE OPTIMIZATION ENGINE v1.0       \n");
+    printf("   Physics-First, Z3 Memory-Safe Routing & Telemetry Service      \n");
+    printf("==================================================================\n\n");
+
+    int bin_ids[5];
+    int bin_capacities[5];
+    int bin_fill_pct[5];
+    int bin_types[5];
+    int bin_hours_ago[5];
+    int bin_fill_rate[5];
+    int bin_overflow[5];
+    int bin_priority[5];
+
+    // Bin 0: Cafeteria Compost
+    bin_ids[0] = 101;
+    bin_capacities[0] = 240;
+    bin_fill_pct[0] = 92;
+    bin_types[0] = 3; // Compost
+    bin_hours_ago[0] = 18;
+    bin_fill_rate[0] = 6;
+    bin_overflow[0] = calculate_overflow_hours(bin_fill_pct[0], bin_fill_rate[0]);
+    bin_priority[0] = calculate_bin_priority(bin_fill_pct[0], bin_types[0], bin_hours_ago[0], bin_fill_rate[0]);
+
+    // Bin 1: Lab Hazardous
+    bin_ids[1] = 102;
+    bin_capacities[1] = 120;
+    bin_fill_pct[1] = 75;
+    bin_types[1] = 4; // Hazardous
+    bin_hours_ago[1] = 8;
+    bin_fill_rate[1] = 4;
+    bin_overflow[1] = calculate_overflow_hours(bin_fill_pct[1], bin_fill_rate[1]);
+    bin_priority[1] = calculate_bin_priority(bin_fill_pct[1], bin_types[1], bin_hours_ago[1], bin_fill_rate[1]);
+
+    // Bin 2: Quad General Waste
+    bin_ids[2] = 103;
+    bin_capacities[2] = 360;
+    bin_fill_pct[2] = 88;
+    bin_types[2] = 1; // General
+    bin_hours_ago[2] = 24;
+    bin_fill_rate[2] = 5;
+    bin_overflow[2] = calculate_overflow_hours(bin_fill_pct[2], bin_fill_rate[2]);
+    bin_priority[2] = calculate_bin_priority(bin_fill_pct[2], bin_types[2], bin_hours_ago[2], bin_fill_rate[2]);
+
+    // Bin 3: Library Recyclables
+    bin_ids[3] = 104;
+    bin_capacities[3] = 240;
+    bin_fill_pct[3] = 45;
+    bin_types[3] = 2; // Recyclable
+    bin_hours_ago[3] = 6;
+    bin_fill_rate[3] = 2;
+    bin_overflow[3] = calculate_overflow_hours(bin_fill_pct[3], bin_fill_rate[3]);
+    bin_priority[3] = calculate_bin_priority(bin_fill_pct[3], bin_types[3], bin_hours_ago[3], bin_fill_rate[3]);
+
+    // Bin 4: Engineering E-Waste
+    bin_ids[4] = 105;
+    bin_capacities[4] = 180;
+    bin_fill_pct[4] = 60;
+    bin_types[4] = 5; // E-Waste
+    bin_hours_ago[4] = 48;
+    bin_fill_rate[4] = 1;
+    bin_overflow[4] = calculate_overflow_hours(bin_fill_pct[4], bin_fill_rate[4]);
+    bin_priority[4] = calculate_bin_priority(bin_fill_pct[4], bin_types[4], bin_hours_ago[4], bin_fill_rate[4]);
+
+    printf("--- Monitored Bin Telemetry & Computed Dispatch Priority ---\n");
+    for (int i = 0; i < 5; i = i + 1) {
+        printf("Bin #%d [Cap: %dL] Fill: %d%% | Type: %d | Overflow in: %dh | Priority Score: %d\n",
+            bin_ids[i],
+            bin_capacities[i],
+            bin_fill_pct[i],
+            bin_types[i],
+            bin_overflow[i],
+            bin_priority[i]
+        );
+    }
+
+    // Parallel bubble sort for route sequencing (descending priority)
+    // 4 passes across 4 elements guarantees j+1 < 5 always
+    for (int pass = 0; pass < 4; pass = pass + 1) {
+        for (int j = 0; j < 4; j = j + 1) {
+            if (bin_priority[j] < bin_priority[j + 1]) {
+                int temp_id = bin_ids[j];
+                bin_ids[j] = bin_ids[j + 1];
+                bin_ids[j + 1] = temp_id;
+
+                int temp_p = bin_priority[j];
+                bin_priority[j] = bin_priority[j + 1];
+                bin_priority[j + 1] = temp_p;
+
+                int temp_f = bin_fill_pct[j];
+                bin_fill_pct[j] = bin_fill_pct[j + 1];
+                bin_fill_pct[j + 1] = temp_f;
+
+                int temp_c = bin_capacities[j];
+                bin_capacities[j] = bin_capacities[j + 1];
+                bin_capacities[j + 1] = temp_c;
+
+                int temp_t = bin_types[j];
+                bin_types[j] = bin_types[j + 1];
+                bin_types[j + 1] = temp_t;
+            }
+        }
+    }
+
+    printf("\n--- Optimal Collection Route Sequence (Highest Urgency First) ---\n");
+    for (int i = 0; i < 5; i = i + 1) {
+        printf("Stop %d -> Bin #%d [Type %d] (Priority: %d, Fill: %d%%)\n",
+            i + 1,
+            bin_ids[i],
+            bin_types[i],
+            bin_priority[i],
+            bin_fill_pct[i]
+        );
+    }
+
+    // Environmental calculations
+    int diversion = calculate_diversion_rate_pct(750, 1100);
+    int co2_saved = calculate_carbon_avoided_kg(420, 280);
+    printf("\n--- Facility Environmental Impact Metrics ---\n");
+    printf("Total Landfill Diversion Rate: %d%%\n", diversion);
+    printf("Net Greenhouse Gas Avoided:   %d kg CO2e\n", co2_saved);
+
+    printf("\n[ALU ENGINE] Optimization cycle completed successfully.\n");
+    return 0;
+}
+
+// --------------------------------------------------------------------------
+// Entry Point
+// --------------------------------------------------------------------------
+routine main() -> int {
+    int test_res = run_self_tests();
+    if (test_res != 0) {
+        return test_res;
+    }
+    return run_simulation();
+}
