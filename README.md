@@ -99,6 +99,29 @@ graph TD
 - **EPA WARM Greenhouse Gas Modeling:** 2.8x multiplier for recycled commodities, 0.5x multiplier for composted organic streams.
 - **One-Click CSV Ledger Export:** Complete chronological service records with technician signatures and contamination notes.
 
+### 🌍 GeoSocial CleanMap & Citizen Reporting
+- **Public Waste Incident Mapping:** Citizens report illegal dump heaps, trash mounds in ravines/gullies, contaminated hillsides, or neglected public spaces.
+- **Physical Terrain Classification:** Categorize sites by physical terrain: *Gully / Ravine*, *Hillside Slope*, *Illegal Dump Heap*, *Riverbank / Waterway*, *Roadside*, or *Urban Alley*.
+- **Severity & Hazard Rating:** Minor, Moderate, Critical, and Hazardous tags with estimated tonnage calculations.
+- **Community Engagement:** Photo evidence simulation, upvoting, volunteer cleanup pledge counters, and direct verification logs.
+- **Life Cycle Status Tracking:** Seamless progression from `reported` &rarr; `dispatched` &rarr; `cleaned` with before/after photo documentation.
+
+### 🚜 Municipal & Private Contractor Work Order Dispatch
+- **1-Click Crew Dispatch:** Transform public reports into formal municipal or private contractor work orders.
+- **Specialized Heavy Machinery Routing:** Assign specialized equipment based on terrain: Grapple Trucks, Winch & Cable Pullers, 30yd Roll-Off Hoists, or Hazmat Containment Units.
+- **Crew Assignment & Tracking:** Assign municipal departments (DPW, Dept of Sanitation) or private commercial haulers with tracking IDs and estimated arrival times.
+
+### 💼 Hauler & Municipal Business Economics Mode (Operator Toggle)
+- **Real-World Trash Business Economics:** Reveal the hidden unit economics and profit margins of owning and operating a commercial waste hauling business.
+- **CapEx Fleet Breakdown:** Detailed capital expenditure accounting for Roll-Off Hoist Trucks ($210,000), 30yd Open-Top Containers ($7,500/ea), Waste Compactors ($42,000), and Grapple Excavators ($165,000).
+- **OpEx Cost Structure:**
+  - Municipal Landfill / Transfer Station Tipping Fees: **$65 / ton** benchmark.
+  - Class-B CDL Driver Wages: **$32 / hr**.
+  - Commercial Heavy Diesel: **$3.85 / gal** (@ 5.5 mpg average).
+  - Commercial Environmental & Fleet Liability Insurance: **$1,450 / month / truck**.
+- **Revenue & Margins:** Roll-off commercial dumpster rentals ($475 base pull + $75/ton overage), municipal cleanup contracts ($350/ton + $450 mobilization), corporate recurring bin route contracts ($185/mo/bin).
+- **Interactive Net Profit Simulator:** Powered by native Alu formulas calculating real-time profit and margin percentages based on job tonnage, haul distance, labor hours, and equipment overhead.
+
 ### 🏢 Four Industry Facility Archetypes
 Instantaneously switch entire facility environments in the persistence modal:
 1. **University Campus:** Dining commons, quad breezeway, biotech lab, academic library.
@@ -149,11 +172,17 @@ routine calculate_required_trucks(int total_liters, int truck_capacity_liters) -
     }
     return count;
 }
+
+// Commercial Cleanup Job Profitability Calculation (Alu Z3 Verified)
+routine calculate_cleanup_job_profit(int revenue_cents, int tipping_fee_cents, int labor_cents, int fuel_cents, int equip_cents) -> int {
+    int total_costs = tipping_fee_cents + labor_cents + fuel_cents + equip_cents;
+    return revenue_cents - total_costs;
+}
 ```
 
 ### Alu Engine Verification Test Suite
 
-Running `./alu_engine/bin/tha_trash_engine` executes 7 unit assertions:
+Running `./alu_engine/bin/tha_trash_engine` executes 8 unit assertions:
 ```
 [ALU ENGINE TEST] Starting Alu Waste Management Unit Tests v2.0...
 [PASS] Test 1: Overflow prediction correctly calculated (4 hours)
@@ -163,7 +192,8 @@ Running `./alu_engine/bin/tha_trash_engine` executes 7 unit assertions:
 [PASS] Test 5: Disposable inventory depletion verified (20 days)
 [PASS] Test 6: Bayesian Friday rush rate verified (10 -> 14 %/hr)
 [PASS] Test 7: Cleanliness index (71/100) and Multi-Truck VRP (3 trucks) verified
-[ALU ENGINE TEST] All 7 Alu Engine verification tests PASSED!
+[PASS] Test 8: Cleanup job profit calculation verified ($1,150)
+[ALU ENGINE TEST] All 8 Alu Engine verification tests PASSED!
 ```
 
 ---
@@ -207,6 +237,21 @@ Run the full end-to-end audit:
 ```bash
 node scripts/test_e2e_verification.mjs
 ```
+
+### 4. Linux PC Desktop Installation (1-Click App Launcher)
+
+To install **THa Trash App** directly to this Linux PC with a Desktop launcher and Applications menu shortcut:
+
+```bash
+# Run the automated desktop installer
+chmod +x install_desktop.sh launch.sh
+./install_desktop.sh
+```
+
+This creates:
+- **Desktop Shortcut:** `~/Desktop/THa-Trash-App.desktop`
+- **Application Menu:** `~/.local/share/applications/tha-trash-app.desktop`
+- **Instant Launcher:** `./launch.sh` (builds production bundle, starts preview server, and launches browser)
 
 ---
 

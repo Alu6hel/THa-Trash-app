@@ -17,15 +17,17 @@ import {
   Plus,
   Volume2,
   VolumeX,
+  Users,
 } from 'lucide-react';
 
-export type NavTab = 'dashboard' | 'map' | 'bins' | 'disposables' | 'routes' | 'analytics';
+export type NavTab = 'dashboard' | 'map' | 'geosocial' | 'bins' | 'disposables' | 'routes' | 'analytics';
 
 interface HeaderProps {
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
   overflowingCount: number;
   lowStockCount: number;
+  pendingReportsCount?: number;
   isSimulating: boolean;
   onToggleSimulation: () => void;
   onOpenDataModal: () => void;
@@ -40,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   overflowingCount,
   lowStockCount,
+  pendingReportsCount = 0,
   isSimulating,
   onToggleSimulation,
   onOpenDataModal,
@@ -73,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Navigation Tabs - Area Map prominently featured */}
+          {/* Navigation Tabs - Area Map & GeoSocial CleanMap prominently featured */}
           <nav className="flex items-center space-x-1 sm:space-x-1.5">
             <button
               onClick={() => setActiveTab('dashboard')}
@@ -97,6 +100,24 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <MapPin className="w-4 h-4 text-emerald-400" />
               <span>Area Map</span>
+            </button>
+
+            {/* GeoSocial CleanMap Tab */}
+            <button
+              onClick={() => setActiveTab('geosocial')}
+              className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+                activeTab === 'geosocial'
+                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              <Users className="w-4 h-4 text-rose-400" />
+              <span>GeoSocial</span>
+              {pendingReportsCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
+                  {pendingReportsCount}
+                </span>
+              )}
             </button>
 
             <button

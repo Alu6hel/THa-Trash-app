@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Clock,
   Sparkles,
+  Users,
 } from 'lucide-react';
 import { TrashBin, DisposableItem, ServiceLogEntry, EnvironmentalMetrics } from '../types';
 import { AluEngineService } from '../services/aluEngineService';
@@ -215,7 +216,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
             >
               <Map className="w-4 h-4 text-indigo-400" />
-              <span>In Your Area Map</span>
+              <span>Area Map</span>
+            </button>
+            <button
+              onClick={() => onNavigateTab('geosocial')}
+              className="px-3.5 py-2 rounded-xl bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 text-xs font-semibold flex items-center gap-1.5 transition-all shadow"
+            >
+              <Users className="w-4 h-4 text-rose-300" />
+              <span>GeoSocial CleanMap</span>
             </button>
           </div>
         </div>

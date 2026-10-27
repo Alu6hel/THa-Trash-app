@@ -252,5 +252,42 @@ export class AluEngineService {
       totalTrackedKg: total,
     };
   }
+
+  /**
+   * Z3 Proved Cleanup Job Economics Calculator
+   * Matches Alu native routine calculate_cleanup_job_profit
+   * Tipping fee: $65/ton
+   * Transport & Labor: $3/mile + $180 fixed crew mobilization
+   */
+  public static calculateCleanupEconomics(
+    estimatedTons: number,
+    distanceMiles: number,
+    municipalBounty: number
+  ): {
+    tippingCost: number;
+    haulCost: number;
+    laborCost: number;
+    totalCost: number;
+    municipalPayout: number;
+    netProfit: number;
+    marginPct: number;
+  } {
+    const tippingCost = Math.round(estimatedTons * 65);
+    const haulCost = Math.round(distanceMiles * 3);
+    const laborCost = 180;
+    const totalCost = tippingCost + haulCost + laborCost;
+    const netProfit = municipalBounty - totalCost;
+    const marginPct = municipalBounty > 0 ? Math.round((netProfit / municipalBounty) * 100) : 0;
+
+    return {
+      tippingCost,
+      haulCost,
+      laborCost,
+      totalCost,
+      municipalPayout: municipalBounty,
+      netProfit,
+      marginPct,
+    };
+  }
 }
 

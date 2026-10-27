@@ -112,3 +112,102 @@ export interface EnvironmentalMetrics {
   co2AvoidedKg: number; // Alu calculated
   totalTrackedKg: number;
 }
+
+// ==============================================================================
+// GeoSocial Waste Reporting & Contractor Logistics
+// ==============================================================================
+
+export type TerrainType =
+  | 'gully_ravine'
+  | 'hillside_slope'
+  | 'illegal_dump'
+  | 'roadside_heap'
+  | 'beach_waterway'
+  | 'vacant_lot';
+
+export type DumpSeverity =
+  | 'small_heap'
+  | 'pickup_truck'
+  | 'multi_ton_mound'
+  | 'industrial_hazmat';
+
+export type ReportStatus = 'reported' | 'dispatched' | 'in_progress' | 'cleaned';
+
+export interface TrashReportComment {
+  id: string;
+  author: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface TrashReport {
+  id: string;
+  title: string;
+  description: string;
+  terrainType: TerrainType;
+  severity: DumpSeverity;
+  estimatedTons: number;
+  wasteComposition: WasteStreamType[];
+  location: {
+    address: string;
+    coordinates: { lat: number; lng: number };
+    terrainNotes?: string;
+  };
+  photos: string[];
+  reportedBy: string;
+  reportedAt: string;
+  upvotes: number;
+  volunteerPledges: number;
+  cleanupBounty: number; // $ estimated municipal or community bounty
+  status: ReportStatus;
+  workOrderId?: string;
+  cleanedAt?: string;
+  beforeAfter?: {
+    beforePhoto: string;
+    afterPhoto: string;
+    verifiedBy: string;
+  };
+  comments: TrashReportComment[];
+}
+
+export type WorkOrderStatus =
+  | 'queued'
+  | 'crew_en_route'
+  | 'on_site'
+  | 'hauling_to_transfer'
+  | 'resolved';
+
+export interface WorkOrder {
+  id: string;
+  reportId: string;
+  targetTitle: string;
+  contractorName: string;
+  assignedCrewSize: number;
+  equipmentRequired: string[];
+  status: WorkOrderStatus;
+  scheduledDate: string;
+  financials: {
+    estimatedTons: number;
+    distanceMiles: number;
+    haulCost: number;
+    tippingCost: number;
+    laborCost: number;
+    municipalPayout: number;
+    netProfit: number;
+    marginPct: number;
+  };
+  notes?: string;
+  updatedAt: string;
+}
+
+export interface HaulerEconomicsProfile {
+  companyName: string;
+  tippingFeePerTon: number; // e.g., $65/ton
+  driverHourlyWage: number; // e.g., $32.50/hr
+  helperHourlyWage: number; // e.g., $20.00/hr
+  dieselPricePerGal: number; // e.g., $3.85/gal
+  truckAvgMpg: number; // e.g., 5.2 MPG
+  maintenancePerMile: number; // e.g., $0.62/mile
+  monthlyInsurancePerTruck: number; // e.g., $1,400/mo
+}
+

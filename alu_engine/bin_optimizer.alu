@@ -123,6 +123,15 @@ routine calculate_required_trucks(int total_liters, int truck_capacity_liters) -
     return count;
 }
 
+// Contractor / Municipal Cleanup Job Economics Calculator
+// Computes net profit from municipal bounty minus tipping fee ($65/ton) and fuel/labor costs ($3/mile + $180 fixed)
+routine calculate_cleanup_job_profit(int estimated_tons, int distance_miles, int municipal_bounty) -> int {
+    int tipping_cost = estimated_tons * 65;
+    int transport_labor_cost = (distance_miles * 3) + 180;
+    int total_expenses = tipping_cost + transport_labor_cost;
+    return municipal_bounty - total_expenses;
+}
+
 // --------------------------------------------------------------------------
 // Automated Self-Test Verification Suite
 // --------------------------------------------------------------------------
@@ -191,7 +200,16 @@ routine run_self_tests() -> int {
     }
     printf("[PASS] Test 7: Cleanliness index (71/100) and Multi-Truck VRP (3 trucks) verified\n");
 
-    printf("[ALU ENGINE TEST] All 7 Alu Engine verification tests PASSED!\n\n");
+    // Test 8: Contractor Cleanup Economics (5 tons, 20 miles, $1500 bounty)
+    // Tipping: 5 * 65 = 325, Transport/Labor: 20 * 3 + 180 = 240. Total: 565. Net Profit: 1500 - 565 = 935.
+    int cleanup_profit = calculate_cleanup_job_profit(5, 20, 1500);
+    if (cleanup_profit != 935) {
+        printf("[FAIL] Cleanup job profit expected 935, got %d\n", cleanup_profit);
+        return 9;
+    }
+    printf("[PASS] Test 8: Contractor cleanup economics verified ($1500 bounty - $565 cost = $935 net profit)\n");
+
+    printf("[ALU ENGINE TEST] All 8 Alu Engine verification tests PASSED!\n\n");
     return 0;
 }
 

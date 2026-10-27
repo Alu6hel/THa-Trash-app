@@ -4,7 +4,14 @@
 // ==============================================================================
 
 import { get, set } from 'idb-keyval';
-import { TrashBin, DisposableItem, ServiceLogEntry, CollectionRoute } from '../types';
+import {
+  TrashBin,
+  DisposableItem,
+  ServiceLogEntry,
+  CollectionRoute,
+  TrashReport,
+  WorkOrder,
+} from '../types';
 import { AluEngineService } from './aluEngineService';
 
 const KEYS = {
@@ -12,6 +19,8 @@ const KEYS = {
   DISPOSABLES: 'tha_trash_disposables_v1',
   LOGS: 'tha_trash_logs_v1',
   ACTIVE_ROUTE: 'tha_trash_active_route_v1',
+  TRASH_REPORTS: 'tha_trash_reports_v1',
+  WORK_ORDERS: 'tha_trash_work_orders_v1',
 };
 
 // Realistic Seed Dataset for a Smart Campus / Enterprise Facility
@@ -291,6 +300,169 @@ export const SEED_LOGS: ServiceLogEntry[] = [
   },
 ];
 
+export const SEED_TRASH_REPORTS: TrashReport[] = [
+  {
+    id: 'rep-001',
+    title: 'Canyon Creek Ravine Plastic & Demolition Heap',
+    description: 'Extensive illegal dumping site down a steep ravine. High accumulation of plastic sheeting, broken concrete, and discarded containers washed down by recent rain.',
+    terrainType: 'gully_ravine',
+    severity: 'multi_ton_mound',
+    estimatedTons: 4.5,
+    wasteComposition: ['general', 'recyclables', 'hazardous'],
+    location: {
+      address: 'Barton Creek Greenbelt Ravine, West Trailhead',
+      coordinates: { lat: 30.2642, lng: -97.7785 },
+      terrainNotes: 'Steep 35-degree rocky gully. Needs winch cable, 30-yd roll-off container and 3-man crew.',
+    },
+    photos: [
+      'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=800&q=80',
+    ],
+    reportedBy: 'Austin EcoWatch Patrol',
+    reportedAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+    upvotes: 38,
+    volunteerPledges: 11,
+    cleanupBounty: 1400,
+    status: 'reported',
+    comments: [
+      {
+        id: 'c-1',
+        author: 'Greenbelt Ranger',
+        text: 'Confirmed runoff from illegal contractor dump. Threatening water table below.',
+        timestamp: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+      },
+      {
+        id: 'c-2',
+        author: 'Volunteer Clean Crew',
+        text: 'Pledged 4 volunteers for manual bagging once roll-off truck arrives.',
+        timestamp: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+      },
+    ],
+  },
+  {
+    id: 'rep-002',
+    title: 'Mount Bonnell Hillside Tire & Appliance Mound',
+    description: 'Over 80 discarded semi-truck tires, rusted freezers, and industrial metal scrap scattered down the hillside slope.',
+    terrainType: 'hillside_slope',
+    severity: 'multi_ton_mound',
+    estimatedTons: 6.2,
+    wasteComposition: ['hazardous', 'general', 'ewaste'],
+    location: {
+      address: 'Mount Bonnell Road, Ridge Point Overlook',
+      coordinates: { lat: 30.3209, lng: -97.7732 },
+      terrainNotes: 'Loose gravel slope. Heavy machinery / grapple hoist truck required.',
+    },
+    photos: [
+      'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
+    ],
+    reportedBy: 'Hillside Resident Association',
+    reportedAt: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
+    upvotes: 54,
+    volunteerPledges: 16,
+    cleanupBounty: 2200,
+    status: 'dispatched',
+    workOrderId: 'wo-101',
+    comments: [
+      {
+        id: 'c-3',
+        author: 'Travis County Waste Inspector',
+        text: 'Dispatched to Hillside Remediation Hauling LLC under Emergency Tender #449.',
+        timestamp: new Date(Date.now() - 10 * 3600 * 1000).toISOString(),
+      },
+    ],
+  },
+  {
+    id: 'rep-003',
+    title: 'East Riverside Commercial Roadside Mound',
+    description: 'Demolition sheetrock, carpet rolls, and household furniture dumped along utility easement.',
+    terrainType: 'roadside_heap',
+    severity: 'pickup_truck',
+    estimatedTons: 1.8,
+    wasteComposition: ['general'],
+    location: {
+      address: 'East Riverside Dr & Pleasant Valley Rd',
+      coordinates: { lat: 30.2415, lng: -97.718 },
+      terrainNotes: 'Flat street shoulder. Direct access for 20-yd roll-off or box truck.',
+    },
+    photos: [
+      'https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?auto=format&fit=crop&w=800&q=80',
+    ],
+    reportedBy: 'District 3 Neighborhood Watch',
+    reportedAt: new Date(Date.now() - 16 * 3600 * 1000).toISOString(),
+    upvotes: 19,
+    volunteerPledges: 4,
+    cleanupBounty: 650,
+    status: 'reported',
+    comments: [],
+  },
+  {
+    id: 'rep-004',
+    title: 'Shoal Creek Waterway Inflow Beach Litter',
+    description: 'Massive drift of beverage containers, styrofoam take-out boxes, and microplastic debris along the shoreline.',
+    terrainType: 'beach_waterway',
+    severity: 'small_heap',
+    estimatedTons: 0.8,
+    wasteComposition: ['recyclables', 'compost', 'general'],
+    location: {
+      address: 'Shoal Creek Inlet near Lady Bird Lake',
+      coordinates: { lat: 30.267, lng: -97.7512 },
+      terrainNotes: 'Sandy riverbank. Hand-sweep and high-density sorting sacks.',
+    },
+    photos: [
+      'https://images.unsplash.com/photo-1621451537084-482c73073a0f?auto=format&fit=crop&w=800&q=80',
+    ],
+    reportedBy: 'Urban River Kayak Club',
+    reportedAt: new Date(Date.now() - 96 * 3600 * 1000).toISOString(),
+    upvotes: 72,
+    volunteerPledges: 24,
+    cleanupBounty: 450,
+    status: 'cleaned',
+    cleanedAt: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+    beforeAfter: {
+      beforePhoto: 'https://images.unsplash.com/photo-1621451537084-482c73073a0f?auto=format&fit=crop&w=800&q=80',
+      afterPhoto: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+      verifiedBy: 'Parks & Recreation Field Officer',
+    },
+    comments: [
+      {
+        id: 'c-4',
+        author: 'EcoVolunteers Team',
+        text: 'Cleaned during Saturday morning paddle sweep! 800kg sorted and recycled.',
+        timestamp: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
+      },
+    ],
+  },
+];
+
+export const SEED_WORK_ORDERS: WorkOrder[] = [
+  {
+    id: 'wo-101',
+    reportId: 'rep-002',
+    targetTitle: 'Mount Bonnell Hillside Tire & Appliance Mound',
+    contractorName: 'Apex Environmental Hauling LLC',
+    assignedCrewSize: 3,
+    equipmentRequired: [
+      'Roll-Off Hoist Truck (30-Yard Heavy Container)',
+      'Hydraulic Grapple Crane',
+      'High-Tension Steel Cable Winch',
+      'Hazmat Tier-2 PPE & Rigging',
+    ],
+    status: 'crew_en_route',
+    scheduledDate: new Date(Date.now() + 4 * 3600 * 1000).toISOString(),
+    financials: {
+      estimatedTons: 6.2,
+      distanceMiles: 14,
+      haulCost: 42,
+      tippingCost: 403,
+      laborCost: 180,
+      municipalPayout: 2200,
+      netProfit: 1575,
+      marginPct: 72,
+    },
+    notes: 'Municipal Emergency Response Authorization Code: TX-MUNI-9821. Certified disposal certificate required for refrigerant freon recovery.',
+    updatedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+  },
+];
+
 export class StorageService {
   private static async getWithFallback<T>(key: string, defaultValue: T): Promise<T> {
     try {
@@ -379,6 +551,22 @@ export class StorageService {
 
   public static async saveActiveRoute(route: CollectionRoute | null): Promise<void> {
     await this.setWithFallback(KEYS.ACTIVE_ROUTE, route);
+  }
+
+  public static async loadReports(): Promise<TrashReport[]> {
+    return await this.getWithFallback<TrashReport[]>(KEYS.TRASH_REPORTS, SEED_TRASH_REPORTS);
+  }
+
+  public static async saveReports(reports: TrashReport[]): Promise<void> {
+    await this.setWithFallback(KEYS.TRASH_REPORTS, reports);
+  }
+
+  public static async loadWorkOrders(): Promise<WorkOrder[]> {
+    return await this.getWithFallback<WorkOrder[]>(KEYS.WORK_ORDERS, SEED_WORK_ORDERS);
+  }
+
+  public static async saveWorkOrders(workOrders: WorkOrder[]): Promise<void> {
+    await this.setWithFallback(KEYS.WORK_ORDERS, workOrders);
   }
 
   public static async loadFacilityPreset(preset: 'university' | 'hospital' | 'tech_hq' | 'stadium'): Promise<{
@@ -627,15 +815,19 @@ export class StorageService {
     const disposables = await this.loadDisposables();
     const logs = await this.loadLogs();
     const route = await this.loadActiveRoute();
+    const reports = await this.loadReports();
+    const workOrders = await this.loadWorkOrders();
 
     const payload = {
       app: 'THa Trash App',
-      version: '1.0.0',
+      version: '2.1.0',
       exportedAt: new Date().toISOString(),
       bins,
       disposables,
       logs,
       route,
+      reports,
+      workOrders,
     };
 
     return JSON.stringify(payload, null, 2);
@@ -655,6 +847,12 @@ export class StorageService {
       }
       if (data.route !== undefined) {
         await this.saveActiveRoute(data.route);
+      }
+      if (data.reports && Array.isArray(data.reports)) {
+        await this.saveReports(data.reports);
+      }
+      if (data.workOrders && Array.isArray(data.workOrders)) {
+        await this.saveWorkOrders(data.workOrders);
       }
       return true;
     } catch (e) {

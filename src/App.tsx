@@ -9,6 +9,7 @@ import { BinManagementView } from './components/BinManagementView';
 import { DisposablesView } from './components/DisposablesView';
 import { RouteOptimizerView } from './components/RouteOptimizerView';
 import { AreaMapView } from './components/AreaMapView';
+import { GeoSocialView } from './components/GeoSocialView';
 import { InstallAppBanner } from './components/InstallAppBanner';
 import { AnalyticsView } from './components/AnalyticsView';
 import { ServiceModal } from './components/ServiceModal';
@@ -16,7 +17,14 @@ import { QRTagModal } from './components/QRTagModal';
 import { DataModal } from './components/DataModal';
 import { ScannerModal } from './components/ScannerModal';
 
-import { TrashBin, DisposableItem, ServiceLogEntry, CollectionRoute } from './types';
+import {
+  TrashBin,
+  DisposableItem,
+  ServiceLogEntry,
+  CollectionRoute,
+  TrashReport,
+  WorkOrder,
+} from './types';
 import { StorageService } from './services/storageService';
 import { AluEngineService } from './services/aluEngineService';
 import { soundService } from './services/soundService';
@@ -27,6 +35,8 @@ export const App: React.FC = () => {
   const [disposables, setDisposables] = useState<DisposableItem[]>([]);
   const [logs, setLogs] = useState<ServiceLogEntry[]>([]);
   const [activeRoute, setActiveRoute] = useState<CollectionRoute | null>(null);
+  const [reports, setReports] = useState<TrashReport[]>([]);
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
 
   const [isSimulating, setIsSimulating] = useState<boolean>(true);
   const [selectedBinForService, setSelectedBinForService] = useState<TrashBin | null>(null);
@@ -43,11 +53,15 @@ export const App: React.FC = () => {
       const loadedDisposables = await StorageService.loadDisposables();
       const loadedLogs = await StorageService.loadLogs();
       const loadedRoute = await StorageService.loadActiveRoute();
+      const loadedReports = await StorageService.loadReports();
+      const loadedWorkOrders = await StorageService.loadWorkOrders();
 
       setBins(loadedBins);
       setDisposables(loadedDisposables);
       setLogs(loadedLogs);
       setActiveRoute(loadedRoute);
+      setReports(loadedReports);
+      setWorkOrders(loadedWorkOrders);
       setIsLoading(false);
     }
     init();
@@ -59,6 +73,18 @@ export const App: React.FC = () => {
       StorageService.saveBins(bins);
     }
   }, [bins, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      StorageService.saveReports(reports);
+    }
+  }, [reports, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      StorageService.saveWorkOrders(workOrders);
+    }
+  }, [workOrders, isLoading]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -429,13 +455,82 @@ export const App: React.FC = () => {
     soundService.playSuccessChime();
   };
 
+  // GeoSocial & Work Order Handlers
+  const handleAddReport = (
+    reportData: Omit<TrashReport, 'id' | 'reportedAt' | 'upvotes' | 'volunteerPledges' | 'comments'>
+  ) => {
+    const newReport: TrashReport = {
+      ...reportData,
+      id: `rep-${Date.now()}`,
+      reportedAt: new Date().toISOString(),
+      upvotes: 1,
+      volunteerPledges: 0,
+      comments: [],
+    };
+    setReports((prev) => [newReport, ...prev]);
+  };
+
+  const handleUpvoteReport = (reportId: string) => {
+    setReports((prev) =>
+      prev.map((r) => (r.id === reportId ? { ...r, upvotes: r.upvotes + 1 } : r))
+    );
+  };
+
+  const handlePledgeVolunteer = (reportId: string) => {
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === reportId ? { ...r, volunteerPledges: r.volunteerPledges + 1 } : r
+      )
+    );
+  };
+
+  const handleDispatchWorkOrder = (orderData: Omit<WorkOrder, 'id' | 'updatedAt'>) => {
+    const newOrder: WorkOrder = {
+      ...orderData,
+      id: `wo-${Date.now()}`,
+      updatedAt: new Date().toISOString(),
+    };
+    setWorkOrders((prev) => [newOrder, ...prev]);
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === orderData.reportId
+          ? { ...r, status: 'dispatched', workOrderId: newOrder.id }
+          : r
+      )
+    );
+  };
+
+  const handleResolveReport = (reportId: string, afterPhotoUrl?: string) => {
+    setReports((prev) =>
+      prev.map((r) => {
+        if (r.id !== reportId) return r;
+        return {
+          ...r,
+          status: 'cleaned',
+          cleanedAt: new Date().toISOString(),
+          beforeAfter: {
+            beforePhoto: r.photos[0] || '',
+            afterPhoto:
+              afterPhotoUrl ||
+              'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+            verifiedBy: 'Certified Municipal Remediation Officer',
+          },
+        };
+      })
+    );
+  };
+
   const handleDataReset = async () => {
     const loadedBins = await StorageService.loadBins();
     const loadedDisposables = await StorageService.loadDisposables();
     const loadedLogs = await StorageService.loadLogs();
+    const loadedReports = await StorageService.loadReports();
+    const loadedWorkOrders = await StorageService.loadWorkOrders();
     setBins(loadedBins);
     setDisposables(loadedDisposables);
     setLogs(loadedLogs);
+    setReports(loadedReports);
+    setWorkOrders(loadedWorkOrders);
     setActiveRoute(null);
   };
 
@@ -469,6 +564,7 @@ export const App: React.FC = () => {
         setActiveTab={setActiveTab}
         overflowingCount={overflowingCount}
         lowStockCount={lowStockCount}
+        pendingReportsCount={reports.filter((r) => r.status === 'reported').length}
         isSimulating={isSimulating}
         onToggleSimulation={() => setIsSimulating(!isSimulating)}
         onOpenDataModal={() => setIsDataModalOpen(true)}
@@ -489,6 +585,30 @@ export const App: React.FC = () => {
             onServiceBin={(b) => setSelectedBinForService(b)}
             onRunRoute={handleGenerateRoute}
             onQuickMarkBin={() => setActiveTab('map')}
+          />
+        )}
+
+        {activeTab === 'map' && (
+          <AreaMapView
+            bins={bins}
+            activeRoute={activeRoute}
+            onAddBinMarker={handleAddBinMarker}
+            onRemoveBinMarker={handleRemoveBinMarker}
+            onServiceBin={(b) => setSelectedBinForService(b)}
+            onUpdateBinFill={handleUpdateBinFill}
+            onNavigateToRoute={() => setActiveTab('routes')}
+          />
+        )}
+
+        {activeTab === 'geosocial' && (
+          <GeoSocialView
+            reports={reports}
+            workOrders={workOrders}
+            onAddReport={handleAddReport}
+            onUpvoteReport={handleUpvoteReport}
+            onPledgeVolunteer={handlePledgeVolunteer}
+            onDispatchWorkOrder={handleDispatchWorkOrder}
+            onResolveReport={handleResolveReport}
           />
         )}
 
@@ -519,18 +639,6 @@ export const App: React.FC = () => {
             onToggleStopServiced={handleToggleStopServiced}
             onCompleteRoute={handleCompleteRoute}
             onNavigateToMap={() => setActiveTab('map')}
-          />
-        )}
-
-        {activeTab === 'map' && (
-          <AreaMapView
-            bins={bins}
-            activeRoute={activeRoute}
-            onAddBinMarker={handleAddBinMarker}
-            onRemoveBinMarker={handleRemoveBinMarker}
-            onServiceBin={(b) => setSelectedBinForService(b)}
-            onUpdateBinFill={handleUpdateBinFill}
-            onNavigateToRoute={() => setActiveTab('routes')}
           />
         )}
 

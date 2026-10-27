@@ -46,7 +46,7 @@ try {
   const aluOutput = execSync(aluBin, { encoding: 'utf8' });
   console.log('Alu Engine Output Snippet:\n' + aluOutput.split('\n').slice(0, 10).join('\n'));
 
-  if (!aluOutput.includes('All 7 Alu Engine verification tests PASSED')) {
+  if (!aluOutput.includes('All 8 Alu Engine verification tests PASSED')) {
     console.error('[FAIL] Alu verification tests did not report passed!');
     process.exit(1);
   }
@@ -58,7 +58,11 @@ try {
     console.error('[FAIL] Alu Clean Facility Health Index missing from output!');
     process.exit(1);
   }
-  console.log('[PASS] Alu native engine v2 passed all 7 Z3-verified unit assertions.\n');
+  if (!aluOutput.includes('Contractor cleanup economics verified')) {
+    console.error('[FAIL] Alu Contractor cleanup economics missing from output!');
+    process.exit(1);
+  }
+  console.log('[PASS] Alu native engine v2 passed all 8 Z3-verified unit assertions.\n');
 } catch (err) {
   console.error('[FAIL] Executing Alu engine failed:', err);
   process.exit(1);
@@ -112,6 +116,12 @@ function calcRequiredTrucks(liters, truckCap) {
   return Math.max(1, Math.ceil(liters / truckCap));
 }
 
+function calcCleanupProfit(tons, distance, bounty) {
+  const tipping = tons * 65;
+  const transport = distance * 3 + 180;
+  return bounty - (tipping + transport);
+}
+
 // Assertions matching Alu test suite
 if (calcOverflow(80, 5) !== 4) throw new Error('Overflow math mismatch');
 if (calcPriority(90, 4, 12, 6) <= calcPriority(90, 1, 12, 6)) throw new Error('Priority hazard mismatch');
@@ -120,6 +130,7 @@ if (calcCarbonAvoided(100, 200) !== 380) throw new Error('Carbon avoidance misma
 if (calcFridaySurge(10, 5) !== 14) throw new Error('Bayesian Friday surge mismatch');
 if (calcCleanlinessIndex(50, 1, 10) !== 71) throw new Error('Cleanliness index mismatch');
 if (calcRequiredTrucks(2100, 1000) !== 3) throw new Error('Multi-truck VRP partition mismatch');
+if (calcCleanupProfit(5, 20, 1500) !== 935) throw new Error('Cleanup economics mismatch');
 
 console.log('[PASS] TypeScript mirror formulas match native Alu engine v2 100%.\n');
 
@@ -157,6 +168,9 @@ const requiredFiles = [
   'public/sw.js',
   'src/components/InstallAppBanner.tsx',
   'src/components/AreaMapView.tsx',
+  'src/components/GeoSocialView.tsx',
+  'launch.sh',
+  'install_desktop.sh',
 ];
 
 for (const rel of requiredFiles) {
@@ -182,6 +196,23 @@ if (!swContent.includes('install') || !swContent.includes('fetch')) {
 }
 console.log('[PASS] PWA installability files (manifest & service worker) verified 100%.\n');
 console.log(`[PASS] All ${requiredFiles.length} core files, blueprints, PWA assets, and Alu binaries verified.\n`);
+
+// 6. Verify Linux Desktop PC Installation
+console.log('[STEP 6] Auditing Linux PC Desktop & App Menu Installation...');
+const desktopFile = '/home/davidalujones/Desktop/THa-Trash-App.desktop';
+const appMenuFile = '/home/davidalujones/.local/share/applications/tha-trash-app.desktop';
+
+if (!fs.existsSync(desktopFile)) {
+  throw new Error(`Desktop file missing: ${desktopFile}`);
+}
+const desktopContent = fs.readFileSync(desktopFile, 'utf8');
+if (!desktopContent.includes('THa Trash App') || !desktopContent.includes('launch.sh')) {
+  throw new Error('Desktop launcher content invalid');
+}
+if (!fs.existsSync(appMenuFile)) {
+  throw new Error(`App menu entry missing: ${appMenuFile}`);
+}
+console.log('[PASS] Linux Desktop launcher and System Application menu verified 100%.\n');
 
 console.log('====================================================');
 console.log('       ALL VERIFICATION AUDITS PASSED 100%          ');
