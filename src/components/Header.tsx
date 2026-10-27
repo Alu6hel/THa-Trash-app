@@ -1,5 +1,6 @@
 // ==============================================================================
 // THa Trash App - Header & Navigation (Header.tsx)
+// Practical In-Your-Area navigation, live telemetry, and persistence controls
 // ==============================================================================
 
 import React from 'react';
@@ -12,13 +13,13 @@ import {
   Sliders,
   Cpu,
   Radio,
-  Map,
-  Camera,
+  MapPin,
+  Plus,
   Volume2,
   VolumeX,
 } from 'lucide-react';
 
-export type NavTab = 'dashboard' | 'bins' | 'disposables' | 'routes' | 'map' | 'analytics';
+export type NavTab = 'dashboard' | 'map' | 'bins' | 'disposables' | 'routes' | 'analytics';
 
 interface HeaderProps {
   activeTab: NavTab;
@@ -29,7 +30,7 @@ interface HeaderProps {
   onToggleSimulation: () => void;
   onOpenDataModal: () => void;
   onTriggerAluCheck: () => void;
-  onOpenScanner: () => void;
+  onQuickMarkBin: () => void;
   isSoundMuted: boolean;
   onToggleSound: () => void;
 }
@@ -43,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSimulation,
   onOpenDataModal,
   onTriggerAluCheck,
-  onOpenScanner,
+  onQuickMarkBin,
   isSoundMuted,
   onToggleSound,
 }) => {
@@ -67,12 +68,12 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
-                Smart Bin Telemetry & Disposables Logistics
+                In Your Area Trash Tracker & Disposables Logistics
               </p>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
+          {/* Navigation Tabs - Area Map prominently featured */}
           <nav className="flex items-center space-x-1 sm:space-x-1.5">
             <button
               onClick={() => setActiveTab('dashboard')}
@@ -83,6 +84,19 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               <span>Command</span>
+            </button>
+
+            {/* In Your Area Map Tab */}
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+                activeTab === 'map'
+                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              <MapPin className="w-4 h-4 text-emerald-400" />
+              <span>Area Map</span>
             </button>
 
             <button
@@ -132,18 +146,6 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
-              onClick={() => setActiveTab('map')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
-                activeTab === 'map'
-                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-              }`}
-            >
-              <Map className="w-4 h-4" />
-              <span>Map</span>
-            </button>
-
-            <button
               onClick={() => setActiveTab('analytics')}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
                 activeTab === 'analytics'
@@ -158,14 +160,14 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Quick Actions & Telemetry Controls */}
           <div className="flex items-center space-x-1.5 sm:space-x-2">
-            {/* Quick Camera Scanner Trigger */}
+            {/* Quick Mark Bin in Area */}
             <button
-              onClick={onOpenScanner}
-              title="Open Barcode & QR Tag Scanner"
-              className="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/30 hover:text-white transition-all flex items-center gap-1.5 text-xs font-semibold"
+              onClick={onQuickMarkBin}
+              title="Mark Trash Bin in Your Area"
+              className="p-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all flex items-center gap-1.5 text-xs shadow-md shadow-emerald-500/20"
             >
-              <Camera className="w-4 h-4 text-indigo-400" />
-              <span className="hidden xl:inline">Scan Tag</span>
+              <Plus className="w-4 h-4" />
+              <span className="hidden xl:inline">Mark Bin</span>
             </button>
 
             {/* Sound Mute / Unmute Toggle */}

@@ -5,10 +5,11 @@
   <p><em>Built with React 18, TypeScript, Tailwind CSS, Web Audio API, and a Z3-Verified <a href="https://github.com/Alu6hel/alu-language">Alu Language</a> Native Core</em></p>
 
   <p>
+    <img src="https://img.shields.io/badge/PWA-Installable%20%7C%20Offline%20Ready-10b981?style=for-the-badge" alt="PWA Installable" />
     <img src="https://img.shields.io/badge/Language-Alu%20v2.0%20%7C%20TypeScript-10b981?style=for-the-badge" alt="Alu and TypeScript" />
     <img src="https://img.shields.io/badge/Verification-Z3%20Theorem%20Prover-3b82f6?style=for-the-badge" alt="Z3 Verifier" />
-    <img src="https://img.shields.io/badge/Mapping-Architectural%20SVG%20Blueprint-8b5cf6?style=for-the-badge" alt="Blueprint Map" />
-    <img src="https://img.shields.io/badge/Scanning-Live%20Camera%20%2B%20Laser%20HUD-ec4899?style=for-the-badge" alt="Camera Scanner" />
+    <img src="https://img.shields.io/badge/Mapping-In%20Your%20Area%20GPS%20Leaflet-8b5cf6?style=for-the-badge" alt="Leaflet GPS Map" />
+    <img src="https://img.shields.io/badge/Audio-Procedural%20Web%20Audio-ec4899?style=for-the-badge" alt="Web Audio" />
     <img src="https://img.shields.io/badge/Storage-Offline--First%20IndexedDB-6366f1?style=for-the-badge" alt="IndexedDB" />
     <img src="https://img.shields.io/badge/Build-Vite%20%2B%20Tailwind-f59e0b?style=for-the-badge" alt="Vite Tailwind" />
   </p>
@@ -58,19 +59,19 @@ graph TD
 
 ## ⚡ Key Features
 
-### 🗺️ Interactive Facility Blueprint & Telemetry Map
-- **Architectural Vector Floor Plan:** Vector SVG rendering of facility wings (Dining, Courtyard, Biotech Labs, Library, Recreation Center, Makerspace).
-- **Live Halo Status Rings:** Visual alerts dynamically change based on bin capacity:
-  - `Normal (<70%)`: Steady calm ring
-  - `Attention (70-89%)`: Pulsing amber caution ring
-  - `Overflowing (≥90%)`: Rapid pulsing red hazard halo
-- **Animated Collection Route Trail:** Draws an SVG polyline connecting scheduled stops in optimal dispatch order.
-- **Click-to-Place Repositioning:** Custodians can click any bin marker, activate repositioning mode, and click anywhere on the blueprint to update coordinates.
+### 📱 Progressive Web App (PWA) 1-Click Install
+- **Installable Native-Like App:** Registered Web App Manifest (`manifest.webmanifest`) and Cache-First Service Worker (`sw.js`).
+- **1-Click Install Banner:** Automatically detects Chrome/Edge/Android `beforeinstallprompt` events and displays a top-bar banner to install with a single click.
+- **iOS Safari Support:** Includes automated modal instructions for Apple iOS Safari ("Share &rarr; Add to Home Screen").
+- **Offline Reliability:** Assets, styles, Leaflet dark tiles, and IndexedDB data remain fully accessible without an internet connection.
 
-### 📷 Live Hardware Camera QR & Barcode Scanner
-- **Targeting Laser Viewfinder:** Uses device video feed (`facingMode: 'environment'`) with laser scanline animations and corner brackets.
-- **Instant Match & Action:** Scanning a bin or disposable packaging triggers immediate service/restock actions.
-- **Audio Feedback:** Real-time audio chirps and chimes generated directly via the browser's Web Audio API without external audio files.
+### 🗺️ Practical "In Your Area" Geographic Map & Marker Management
+- **Real-World Geographic Mapping:** Built with Leaflet.js and CartoDB Dark Matter vector tiles for zero-latency, keyless navigation.
+- **1-Click "Mark Trash Bin in Area":** Click anywhere on the map or tap the "Mark Bin Here" GPS button to drop a real-world receptacle marker. Specify waste stream, capacity, and current fill level.
+- **1-Click "Remove Bin Marker":** Simply tap any bin marker and click the red "Remove Marker" button to delete it from the area map.
+- **Live GPS Proximity & Compass:** One-click "Locate In My Area" activates device GPS with high accuracy, auto-centers the view, and calculates exact Haversine distance to each bin (e.g., *“32m away”*).
+- **Interactive Marker Controls:** Adjust fill levels on the fly (0%, 25%, 50%, 75%, 100%), mark bins as serviced, and trace dynamic VRP collection route polylines.
+- **Acoustic Audio Feedback:** Custom synthesized Web Audio pops and whooshes trigger when markers are placed or removed.
 
 ### 🗄️ Smart Bin Fleet Telemetry
 - **IoT Ultrasonic Simulation:** Simulates ultrasonic level sensor pings every 8 seconds with battery tracking.

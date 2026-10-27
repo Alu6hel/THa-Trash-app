@@ -8,7 +8,8 @@ import { DashboardView } from './components/DashboardView';
 import { BinManagementView } from './components/BinManagementView';
 import { DisposablesView } from './components/DisposablesView';
 import { RouteOptimizerView } from './components/RouteOptimizerView';
-import { FacilityMapView } from './components/FacilityMapView';
+import { AreaMapView } from './components/AreaMapView';
+import { InstallAppBanner } from './components/InstallAppBanner';
 import { AnalyticsView } from './components/AnalyticsView';
 import { ServiceModal } from './components/ServiceModal';
 import { QRTagModal } from './components/QRTagModal';
@@ -203,6 +204,84 @@ export const App: React.FC = () => {
     );
   };
 
+  // In Your Area Map Marker Handlers
+  const handleAddBinMarker = (binData: Partial<TrashBin>) => {
+    const id = `bin-${Date.now()}`;
+    const numericId = 100 + bins.length + 1;
+    const stream = binData.stream || 'general';
+    const fill = binData.currentFillPct ?? 0;
+    const fillRate = binData.fillRatePerHour ?? 3.5;
+    const lastEmptied = new Date().toISOString();
+
+    const priority = AluEngineService.calculateBinPriority(fill, stream, lastEmptied, fillRate);
+    const overflow = AluEngineService.calculateOverflowHours(fill, fillRate);
+
+    const newBin: TrashBin = {
+      id,
+      numericId,
+      code: binData.code || `BIN-AREA-${numericId}`,
+      name: binData.name || `Area Trash Bin #${numericId}`,
+      stream,
+      location: {
+        building: binData.location?.building || 'Local District',
+        floor: binData.location?.floor || 'Ground Level',
+        roomOrArea: binData.location?.roomOrArea || 'Outdoor Area',
+        mapX: 50,
+        mapY: 50,
+        coordinates: binData.location?.coordinates || { lat: 37.7749, lng: -122.4194 },
+      },
+      capacityLiters: binData.capacityLiters || 200,
+      currentFillPct: fill,
+      fillRatePerHour: fillRate,
+      lastEmptiedAt: lastEmptied,
+      nextScheduledPickup: new Date(Date.now() + 86400000).toISOString(),
+      status: fill >= 85 ? 'overflowing' : fill >= 70 ? 'attention' : 'normal',
+      priorityScore: priority,
+      hoursUntilOverflow: overflow,
+      tags: binData.tags || ['in-your-area', 'user-marked', stream],
+      notes: binData.notes || 'Added from In Your Area Map',
+    };
+
+    setBins((prev) => [newBin, ...prev]);
+    soundService.playMarkerPlaced();
+  };
+
+  const handleRemoveBinMarker = (binId: string) => {
+    setBins((prev) => prev.filter((b) => b.id !== binId));
+    if (activeRoute) {
+      setActiveRoute({
+        ...activeRoute,
+        stops: activeRoute.stops.filter((s) => s.binId !== binId),
+      });
+    }
+    soundService.playMarkerRemoved();
+  };
+
+  const handleUpdateBinFill = (binId: string, newFillPct: number) => {
+    setBins((prev) =>
+      prev.map((b) => {
+        if (b.id !== binId) return b;
+        const priority = AluEngineService.calculateBinPriority(
+          newFillPct,
+          b.stream,
+          b.lastEmptiedAt,
+          b.fillRatePerHour
+        );
+        const overflow = AluEngineService.calculateOverflowHours(newFillPct, b.fillRatePerHour);
+        const newStatus: 'normal' | 'attention' | 'overflowing' | 'maintenance' =
+          newFillPct >= 85 ? 'overflowing' : newFillPct >= 70 ? 'attention' : 'normal';
+        return {
+          ...b,
+          currentFillPct: newFillPct,
+          status: newStatus,
+          priorityScore: priority,
+          hoursUntilOverflow: overflow,
+          lastEmptiedAt: newFillPct === 0 ? new Date().toISOString() : b.lastEmptiedAt,
+        };
+      })
+    );
+  };
+
   // Handlers: Disposables
   const handleAddDisposable = (newItem: any) => {
     const id = `disp-${Date.now()}`;
@@ -384,6 +463,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex flex-col font-sans">
+      <InstallAppBanner />
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -393,7 +473,7 @@ export const App: React.FC = () => {
         onToggleSimulation={() => setIsSimulating(!isSimulating)}
         onOpenDataModal={() => setIsDataModalOpen(true)}
         onTriggerAluCheck={handleForceAluCheck}
-        onOpenScanner={() => setIsScannerOpen(true)}
+        onQuickMarkBin={() => setActiveTab('map')}
         isSoundMuted={isSoundMuted}
         onToggleSound={handleToggleSound}
       />
@@ -408,7 +488,7 @@ export const App: React.FC = () => {
             onNavigateTab={setActiveTab}
             onServiceBin={(b) => setSelectedBinForService(b)}
             onRunRoute={handleGenerateRoute}
-            onOpenScanner={() => setIsScannerOpen(true)}
+            onQuickMarkBin={() => setActiveTab('map')}
           />
         )}
 
@@ -443,11 +523,13 @@ export const App: React.FC = () => {
         )}
 
         {activeTab === 'map' && (
-          <FacilityMapView
+          <AreaMapView
             bins={bins}
             activeRoute={activeRoute}
-            onSelectBinForService={(b) => setSelectedBinForService(b)}
-            onUpdateBinCoordinates={handleUpdateBinCoordinates}
+            onAddBinMarker={handleAddBinMarker}
+            onRemoveBinMarker={handleRemoveBinMarker}
+            onServiceBin={(b) => setSelectedBinForService(b)}
+            onUpdateBinFill={handleUpdateBinFill}
             onNavigateToRoute={() => setActiveTab('routes')}
           />
         )}

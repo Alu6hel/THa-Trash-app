@@ -17,7 +17,7 @@ import {
   Layers,
   Cpu,
   Map,
-  Camera,
+  MapPin,
   ShieldCheck,
   Clock,
   Sparkles,
@@ -34,7 +34,7 @@ interface DashboardViewProps {
   onNavigateTab: (tab: any) => void;
   onServiceBin: (bin: TrashBin) => void;
   onRunRoute: () => void;
-  onOpenScanner: () => void;
+  onQuickMarkBin: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -45,7 +45,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateTab,
   onServiceBin,
   onRunRoute,
-  onOpenScanner,
+  onQuickMarkBin,
 }) => {
   const overflowingBins = bins.filter((b) => b.currentFillPct >= 85);
   const attentionBins = bins.filter((b) => b.currentFillPct >= 70 && b.currentFillPct < 85);
@@ -204,18 +204,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <div className="flex items-center gap-2">
             <button
-              onClick={onOpenScanner}
-              className="px-3.5 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-semibold flex items-center gap-1.5 transition-all shadow"
+              onClick={onQuickMarkBin}
+              className="px-3.5 py-2 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-1.5 transition-all shadow"
             >
-              <Camera className="w-4 h-4 text-indigo-300" />
-              <span>Laser QR Scanner</span>
+              <MapPin className="w-4 h-4 text-emerald-300" />
+              <span>Mark Bin in Area</span>
             </button>
             <button
               onClick={() => onNavigateTab('map')}
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
             >
-              <Map className="w-4 h-4 text-emerald-400" />
-              <span>Facility Blueprint Map</span>
+              <Map className="w-4 h-4 text-indigo-400" />
+              <span>In Your Area Map</span>
             </button>
           </div>
         </div>

@@ -153,6 +153,10 @@ const requiredFiles = [
   'alu_engine/build_alu.sh',
   'alu_engine/Makefile',
   'alu_engine/bin/tha_trash_engine',
+  'public/manifest.webmanifest',
+  'public/sw.js',
+  'src/components/InstallAppBanner.tsx',
+  'src/components/AreaMapView.tsx',
 ];
 
 for (const rel of requiredFiles) {
@@ -162,7 +166,22 @@ for (const rel of requiredFiles) {
     process.exit(1);
   }
 }
-console.log(`[PASS] All ${requiredFiles.length} core files, blueprints, and Alu binaries verified.\n`);
+
+// 5. Verify PWA Manifest & Service Worker
+console.log('[STEP 5] Auditing PWA Web App Manifest and Service Worker...');
+const manifestJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'public', 'manifest.webmanifest'), 'utf8'));
+if (!manifestJson.name || !manifestJson.name.includes('THa Trash App')) {
+  throw new Error('Manifest name mismatch');
+}
+if (manifestJson.display !== 'standalone') {
+  throw new Error('Manifest display should be standalone');
+}
+const swContent = fs.readFileSync(path.join(ROOT, 'public', 'sw.js'), 'utf8');
+if (!swContent.includes('install') || !swContent.includes('fetch')) {
+  throw new Error('Service Worker missing install or fetch listener');
+}
+console.log('[PASS] PWA installability files (manifest & service worker) verified 100%.\n');
+console.log(`[PASS] All ${requiredFiles.length} core files, blueprints, PWA assets, and Alu binaries verified.\n`);
 
 console.log('====================================================');
 console.log('       ALL VERIFICATION AUDITS PASSED 100%          ');
