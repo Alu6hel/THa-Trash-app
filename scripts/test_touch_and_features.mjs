@@ -60,12 +60,21 @@ assert(facilityMapView.includes('touches') && facilityMapView.includes('changedT
 assert(facilityMapView.includes('onTouchEnd={(e) =>'), 'Bin markers have onTouchEnd listener for instant tap selection');
 assert(facilityMapView.includes('r="24"') && facilityMapView.includes('fill="transparent"'), 'Bin markers contain invisible 48px diameter touch hit target circle');
 
-// 5. Audit Header Touch Navigation
-console.log('\n[STEP 5] Auditing Header touch navigation & tabs...');
+// 5. Audit Bottom Rudder Navigation & Circular Radial Gauges
+console.log('\n[STEP 5] Auditing Bottom Rudder Navigation & Circular Gauges...');
+const bottomNavTsx = fs.readFileSync(path.join(ROOT_DIR, 'src/components/BottomNavBar.tsx'), 'utf-8');
+assert(bottomNavTsx.includes('fixed bottom-3 inset-x-0 mx-auto max-w-md'), 'Floating bottom navigation dock configured with mobile-first centering');
+assert(bottomNavTsx.includes('min-w-[56px]'), 'Bottom navigation items sized to conform to WCAG mobile thumb touch targets');
+assert(bottomNavTsx.includes('w-12 h-12 rounded-full') && bottomNavTsx.includes('active:scale-90'), 'Central floating Rudder (+) action button configured with haptic press scaling');
+assert(bottomNavTsx.includes('backdrop-blur-xl'), 'Bottom dock styled with luxury glassmorphic backdrop-blur');
+
+const gaugeTsx = fs.readFileSync(path.join(ROOT_DIR, 'src/components/CircularGauge.tsx'), 'utf-8');
+assert(gaugeTsx.includes('<svg') && gaugeTsx.includes('strokeDashoffset'), 'CircularGauge component renders SVG radial progress stroke');
+assert(gaugeTsx.includes('drop-shadow'), 'CircularGauge applies glowing drop-shadow filter');
+
 const headerTsx = fs.readFileSync(path.join(ROOT_DIR, 'src/components/Header.tsx'), 'utf-8');
-assert(headerTsx.includes('overflow-x-auto no-scrollbar touch-scroll'), 'Header nav bar supports horizontal touch swiping without ugly scrollbars');
-assert(headerTsx.includes('shrink-0 px-3 py-2 min-h-[38px]'), 'Header nav tabs sized for finger taps with shrink-0 protection');
-assert(headerTsx.includes('active:scale-95'), 'Header nav tabs provide active:scale-95 tactile touch feedback');
+assert(headerTsx.includes('whitespace-nowrap'), 'Header logo & title configured with whitespace-nowrap to eliminate mobile text wrapping');
+assert(headerTsx.includes('active:scale-95'), 'Header buttons feature active:scale-95 tactile touch feedback');
 
 // 6. Audit Native Alu Systems Core
 console.log('\n[STEP 6] Running Native Alu Systems Core (All 8 Z3 unit assertions)...');

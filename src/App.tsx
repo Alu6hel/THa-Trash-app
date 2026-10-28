@@ -4,6 +4,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Header, NavTab } from './components/Header';
+import { BottomNavBar } from './components/BottomNavBar';
+import { QuickActionModal } from './components/QuickActionModal';
 import { DashboardView } from './components/DashboardView';
 import { BinManagementView } from './components/BinManagementView';
 import { DisposablesView } from './components/DisposablesView';
@@ -43,6 +45,7 @@ export const App: React.FC = () => {
   const [selectedBinForQR, setSelectedBinForQR] = useState<TrashBin | null>(null);
   const [isDataModalOpen, setIsDataModalOpen] = useState<boolean>(false);
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+  const [isQuickActionOpen, setIsQuickActionOpen] = useState<boolean>(false);
   const [isSoundMuted, setIsSoundMuted] = useState<boolean>(soundService.isMuted());
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -570,11 +573,12 @@ export const App: React.FC = () => {
         onOpenDataModal={() => setIsDataModalOpen(true)}
         onTriggerAluCheck={handleForceAluCheck}
         onQuickMarkBin={() => setActiveTab('map')}
+        onOpenScanner={() => setIsScannerOpen(true)}
         isSoundMuted={isSoundMuted}
         onToggleSound={handleToggleSound}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 sm:pb-32">
         {activeTab === 'dashboard' && (
           <DashboardView
             bins={bins}
@@ -585,6 +589,7 @@ export const App: React.FC = () => {
             onServiceBin={(b) => setSelectedBinForService(b)}
             onRunRoute={handleGenerateRoute}
             onQuickMarkBin={() => setActiveTab('map')}
+            onOpenScanner={() => setIsScannerOpen(true)}
           />
         )}
 
@@ -644,6 +649,27 @@ export const App: React.FC = () => {
 
         {activeTab === 'analytics' && <AnalyticsView metrics={metrics} logs={logs} />}
       </main>
+
+      {/* Modern Floating Bottom Navigation Dock (Mobile-first Tab Bar + Rudder) */}
+      <BottomNavBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        overflowingCount={overflowingCount}
+        lowStockCount={lowStockCount}
+        pendingReportsCount={reports.filter((r) => r.status === 'reported').length}
+        onOpenQuickAction={() => setIsQuickActionOpen(true)}
+        onOpenDataModal={() => setIsDataModalOpen(true)}
+      />
+
+      {/* Central Rudder Quick Action Sheet */}
+      <QuickActionModal
+        isOpen={isQuickActionOpen}
+        onClose={() => setIsQuickActionOpen(false)}
+        onNavigateTab={setActiveTab}
+        onQuickMarkBin={() => setActiveTab('map')}
+        onOpenScanner={() => setIsScannerOpen(true)}
+        onRunRoute={handleGenerateRoute}
+      />
 
       {/* Modals */}
       {selectedBinForService && (

@@ -1,6 +1,6 @@
 // ==============================================================================
-// THa Trash App - Header & Navigation (Header.tsx)
-// Practical In-Your-Area navigation, live telemetry, and persistence controls
+// THa Trash App - Redesigned Header (Header.tsx)
+// Simplified, uncluttered, mobile-first top app bar
 // ==============================================================================
 
 import React from 'react';
@@ -18,9 +18,17 @@ import {
   Volume2,
   VolumeX,
   Users,
+  QrCode,
 } from 'lucide-react';
 
-export type NavTab = 'dashboard' | 'map' | 'geosocial' | 'bins' | 'disposables' | 'routes' | 'analytics';
+export type NavTab =
+  | 'dashboard'
+  | 'map'
+  | 'geosocial'
+  | 'bins'
+  | 'disposables'
+  | 'routes'
+  | 'analytics';
 
 interface HeaderProps {
   activeTab: NavTab;
@@ -33,6 +41,7 @@ interface HeaderProps {
   onOpenDataModal: () => void;
   onTriggerAluCheck: () => void;
   onQuickMarkBin: () => void;
+  onOpenScanner?: () => void;
   isSoundMuted: boolean;
   onToggleSound: () => void;
 }
@@ -48,73 +57,70 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenDataModal,
   onTriggerAluCheck,
   onQuickMarkBin,
+  onOpenScanner,
   isSoundMuted,
   onToggleSound,
 }) => {
   return (
-    <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Trash2 className="w-5 h-5 text-slate-950 font-bold" />
+    <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-xl border-b border-slate-800/80">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
+          {/* Logo & Brand - Guaranteed 1-line no wrap */}
+          <div
+            className="flex items-center space-x-2.5 cursor-pointer shrink-0"
+            onClick={() => setActiveTab('dashboard')}
+          >
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-teal-400 flex items-center justify-center shadow-md shadow-emerald-500/20 active:scale-95 transition-transform">
+              <Trash2 className="w-5 h-5 text-slate-950 font-black" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">
-                  THa Trash App
-                </span>
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  <Cpu className="w-3 h-3 mr-1" />
-                  ALU v2.0
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
-                In Your Area Trash Tracker & Disposables Logistics
-              </p>
+            <div className="flex items-center gap-1.5 whitespace-nowrap">
+              <span className="font-black text-base sm:text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-emerald-400 bg-clip-text text-transparent">
+                THa Trash
+              </span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <Cpu className="w-2.5 h-2.5 mr-0.5" />
+                ALU
+              </span>
             </div>
           </div>
 
-          {/* Navigation Tabs - Area Map & GeoSocial CleanMap prominently featured */}
-          <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto no-scrollbar touch-scroll py-1 max-w-full">
+          {/* Desktop Navigation Tabs (Hidden on small mobile screens to prevent crowding) */}
+          <nav className="hidden lg:flex items-center space-x-1 py-1">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`shrink-0 px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                 activeTab === 'dashboard'
-                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
-              <span>Command</span>
+              Command
             </button>
 
-            {/* In Your Area Map Tab */}
             <button
               onClick={() => setActiveTab('map')}
-              className={`shrink-0 px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 ${
                 activeTab === 'map'
-                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
-              <MapPin className="w-4 h-4 text-emerald-400" />
+              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
               <span>Area Map</span>
             </button>
 
-            {/* GeoSocial CleanMap Tab */}
             <button
               onClick={() => setActiveTab('geosocial')}
-              className={`shrink-0 relative px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
+              className={`relative px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 ${
                 activeTab === 'geosocial'
-                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
-              <Users className="w-4 h-4 text-rose-400" />
+              <Users className="w-3.5 h-3.5 text-rose-400" />
               <span>GeoSocial</span>
               {pendingReportsCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
+                <span className="px-1.5 py-0.2 text-[9px] rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40">
                   {pendingReportsCount}
                 </span>
               )}
@@ -122,16 +128,16 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => setActiveTab('bins')}
-              className={`shrink-0 relative px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
+              className={`relative px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 ${
                 activeTab === 'bins'
-                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
               <span>Bins</span>
               {overflowingCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
+                <span className="px-1.5 py-0.2 text-[9px] rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40">
                   {overflowingCount}
                 </span>
               )}
@@ -139,16 +145,16 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => setActiveTab('disposables')}
-              className={`shrink-0 relative px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
+              className={`relative px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 ${
                 activeTab === 'disposables'
-                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
-              <Package className="w-4 h-4" />
+              <Package className="w-3.5 h-3.5" />
               <span>Disposables</span>
               {lowStockCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                <span className="px-1.5 py-0.2 text-[9px] rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
                   {lowStockCount}
                 </span>
               )}
@@ -156,78 +162,87 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => setActiveTab('routes')}
-              className={`shrink-0 px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 ${
                 activeTab === 'routes'
-                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
-              <Route className="w-4 h-4" />
-              <span>Route</span>
+              <Route className="w-3.5 h-3.5" />
+              <span>Routes</span>
             </button>
 
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`shrink-0 px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 ${
                 activeTab === 'analytics'
-                  ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
-              <BarChart3 className="w-4 h-4" />
-              <span>Metrics</span>
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>ESG</span>
             </button>
           </nav>
 
-          {/* Quick Actions & Telemetry Controls */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2">
-            {/* Quick Mark Bin in Area */}
-            <button
-              onClick={onQuickMarkBin}
-              title="Mark Trash Bin in Your Area"
-              className="p-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all flex items-center gap-1.5 text-xs shadow-md shadow-emerald-500/20"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden xl:inline">Mark Bin</span>
-            </button>
+          {/* Quick Header Utility Controls */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+            {/* Quick Camera Barcode/QR Scanner */}
+            {onOpenScanner && (
+              <button
+                onClick={onOpenScanner}
+                title="Open Camera Scanner"
+                className="p-2 rounded-xl bg-slate-800/80 border border-slate-700/80 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 transition-all active:scale-95"
+              >
+                <QrCode className="w-4 h-4" />
+              </button>
+            )}
 
-            {/* Sound Mute / Unmute Toggle */}
+            {/* Sound Toggle */}
             <button
               onClick={onToggleSound}
-              title={isSoundMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
-              className="p-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white transition-all"
+              title={isSoundMuted ? 'Unmute Sound' : 'Mute Sound'}
+              className="p-2 rounded-xl bg-slate-800/80 border border-slate-700/80 text-slate-300 hover:text-white transition-all active:scale-95"
             >
-              {isSoundMuted ? <VolumeX className="w-4 h-4 text-slate-500" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+              {isSoundMuted ? (
+                <VolumeX className="w-4 h-4 text-slate-500" />
+              ) : (
+                <Volume2 className="w-4 h-4 text-emerald-400" />
+              )}
             </button>
 
-            {/* Simulation Toggle */}
+            {/* Telemetry Sensor Status Pill */}
             <button
               onClick={onToggleSimulation}
-              title={isSimulating ? 'Pause IoT Ultrasonic Sensor Pings' : 'Start Simulated IoT Sensor Pings'}
-              className={`p-2 rounded-lg border text-xs font-mono flex items-center space-x-1.5 transition-all ${
+              title={isSimulating ? 'Pause IoT Sensor Telemetry' : 'Resume IoT Sensor Telemetry'}
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-mono flex items-center gap-1.5 transition-all active:scale-95 ${
                 isSimulating
-                  ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 shadow-sm shadow-emerald-500/20'
-                  : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-slate-200'
+                  ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
+                  : 'bg-slate-800/60 border-slate-700/80 text-slate-400'
               }`}
             >
-              <Radio className={`w-3.5 h-3.5 ${isSimulating ? 'text-emerald-400 animate-pulse' : ''}`} />
-              <span className="hidden lg:inline">{isSimulating ? 'IoT Live' : 'IoT Idle'}</span>
+              <Radio
+                className={`w-3.5 h-3.5 ${isSimulating ? 'text-emerald-400 animate-pulse' : ''}`}
+              />
+              <span className="text-[11px] font-semibold hidden sm:inline">
+                {isSimulating ? 'Live IoT' : 'Idle'}
+              </span>
             </button>
 
-            {/* Alu Engine Force Recalculate */}
+            {/* Alu Pass Check */}
             <button
               onClick={onTriggerAluCheck}
-              title="Run Alu Z3-Proven Optimization Pass"
-              className="p-2 rounded-lg bg-slate-800/80 border border-slate-700 hover:border-emerald-500/60 text-slate-300 hover:text-emerald-300 transition-all"
+              title="Force Alu Z3-Proof Mathematical Optimization"
+              className="p-2 rounded-xl bg-slate-800/80 border border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 transition-all active:scale-95"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
 
-            {/* Data Management Modal */}
+            {/* Settings & Facility Data Presets */}
             <button
               onClick={onOpenDataModal}
-              title="Export, Import, Facility Presets, or Reset Data"
-              className="p-2 rounded-lg bg-slate-800/80 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white transition-all"
+              title="Settings & Facility Presets"
+              className="p-2 rounded-xl bg-slate-800/80 border border-slate-700/80 hover:border-slate-600 text-slate-300 hover:text-white transition-all active:scale-95"
             >
               <Sliders className="w-4 h-4" />
             </button>
