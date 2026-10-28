@@ -77,10 +77,10 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Navigation Tabs - Area Map & GeoSocial CleanMap prominently featured */}
-          <nav className="flex items-center space-x-1 sm:space-x-1.5">
+          <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto no-scrollbar touch-scroll py-1 max-w-full">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+              className={`shrink-0 px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
                 activeTab === 'dashboard'
                   ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* In Your Area Map Tab */}
             <button
               onClick={() => setActiveTab('map')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+              className={`shrink-0 px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
                 activeTab === 'map'
                   ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* GeoSocial CleanMap Tab */}
             <button
               onClick={() => setActiveTab('geosocial')}
-              className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+              className={`shrink-0 relative px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
                 activeTab === 'geosocial'
                   ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -122,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => setActiveTab('bins')}
-              className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+              className={`shrink-0 relative px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
                 activeTab === 'bins'
                   ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -139,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => setActiveTab('disposables')}
-              className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+              className={`shrink-0 relative px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
                 activeTab === 'disposables'
                   ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -156,7 +156,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => setActiveTab('routes')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+              className={`shrink-0 px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
                 activeTab === 'routes'
                   ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -168,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+              className={`shrink-0 px-3 py-2 min-h-[38px] rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center space-x-1.5 ${
                 activeTab === 'analytics'
                   ? 'bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'

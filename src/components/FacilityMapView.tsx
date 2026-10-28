@@ -73,12 +73,28 @@ export const FacilityMapView: React.FC<FacilityMapViewProps> = ({
     return `M ${points.join(' L ')}`;
   };
 
-  const handleMapClick = async (e: React.MouseEvent<SVGSVGElement>) => {
+  const handleMapClick = async (
+    e: React.MouseEvent<SVGSVGElement> | React.TouchEvent<SVGSVGElement>
+  ) => {
     if (!repositioningBinId) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = ((e.clientX - rect.left) / rect.width) * 100;
-    const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+    let clientX = 0;
+    let clientY = 0;
+
+    if ('touches' in e && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if ('changedTouches' in e && e.changedTouches.length > 0) {
+      clientX = e.changedTouches[0].clientX;
+      clientY = e.changedTouches[0].clientY;
+    } else if ('clientX' in e) {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const clickX = ((clientX - rect.left) / rect.width) * 100;
+    const clickY = ((clientY - rect.top) / rect.height) * 100;
 
     const boundedX = Math.max(5, Math.min(95, Math.round(clickX)));
     const boundedY = Math.max(5, Math.min(95, Math.round(clickY)));
@@ -165,9 +181,10 @@ export const FacilityMapView: React.FC<FacilityMapViewProps> = ({
         {/* Architectural Background Grid & Rooms */}
         <div className="relative w-full aspect-[16/9] min-h-[460px] bg-[#070d18] rounded-2xl border border-slate-800/80 overflow-hidden">
           <svg
-            className="w-full h-full cursor-crosshair select-none"
+            className="w-full h-full cursor-crosshair select-none touch-manipulation"
             viewBox="0 0 1000 600"
             onClick={handleMapClick}
+            onTouchEnd={handleMapClick}
           >
             {/* Grid Pattern */}
             <defs>
@@ -263,8 +280,13 @@ export const FacilityMapView: React.FC<FacilityMapViewProps> = ({
               return (
                 <g
                   key={bin.id}
-                  className="cursor-pointer transition-transform hover:scale-125"
+                  className="cursor-pointer transition-transform hover:scale-125 touch-manipulation"
                   onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedBin(bin);
+                    soundService.playScanBeep();
+                  }}
+                  onTouchEnd={(e) => {
                     e.stopPropagation();
                     setSelectedBin(bin);
                     soundService.playScanBeep();
@@ -272,6 +294,9 @@ export const FacilityMapView: React.FC<FacilityMapViewProps> = ({
                   onMouseEnter={() => setHoveredBin(bin)}
                   onMouseLeave={() => setHoveredBin(null)}
                 >
+                  {/* Invisible Finger Hit Target (48px diameter) */}
+                  <circle cx={svgX} cy={svgY} r="24" fill="transparent" />
+
                   {/* Halo Pulse Ring for High Fill */}
                   {isOverflowing && (
                     <circle

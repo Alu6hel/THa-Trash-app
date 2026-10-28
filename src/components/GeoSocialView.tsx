@@ -224,6 +224,13 @@ export const GeoSocialView: React.FC<GeoSocialViewProps> = ({
       mapInstanceRef.current = map;
     }
 
+    // Invalidate size when map tab is activated to ensure complete tile rendering on touch displays
+    if (activeTab === 'map' && mapInstanceRef.current) {
+      setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize();
+      }, 100);
+    }
+
     // Refresh markers
     if (markersLayerRef.current) {
       markersLayerRef.current.clearLayers();
@@ -240,28 +247,38 @@ export const GeoSocialView: React.FC<GeoSocialViewProps> = ({
 
         const iconHtml = `
           <div style="
-            background: ${colorClass};
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            min-width: 44px;
+            min-height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 15px ${colorClass}99, 0 4px 6px rgba(0,0,0,0.5);
-            border: 2px solid #ffffff;
-            font-size: 14px;
+            touch-action: manipulation;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
           ">
-            ${TERRAIN_CONFIG[rep.terrainType].icon}
+            <div style="
+              background: ${colorClass};
+              width: 34px;
+              height: 34px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 0 16px ${colorClass}99, 0 4px 8px rgba(0,0,0,0.6);
+              border: 2px solid #ffffff;
+              font-size: 15px;
+            ">
+              ${TERRAIN_CONFIG[rep.terrainType].icon}
+            </div>
           </div>
         `;
 
         const customIcon = L.divIcon({
           html: iconHtml,
           className: 'geosocial-dump-marker',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
-          popupAnchor: [0, -18],
+          iconSize: [44, 44],
+          iconAnchor: [22, 22],
+          popupAnchor: [0, -22],
         });
 
         const popupContent = document.createElement('div');

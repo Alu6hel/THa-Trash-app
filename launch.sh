@@ -21,7 +21,7 @@ fi
 # Check if server is already running on port 4173
 if ! curl -s --head "$URL" >/dev/null 2>&1; then
     echo "[LAUNCHER] Starting local preview server on port ${PORT}..."
-    npx vite preview --port ${PORT} --host 127.0.0.1 >/tmp/tha_trash_app_preview.log 2>&1 &
+    setsid nohup ./node_modules/.bin/vite preview --port ${PORT} --host 0.0.0.0 </dev/null >/tmp/tha_trash_app_preview.log 2>&1 &
     SERVER_PID=$!
     
     # Wait up to 5 seconds for server to bind

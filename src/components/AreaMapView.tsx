@@ -243,24 +243,35 @@ export const AreaMapView: React.FC<AreaMapViewProps> = ({
       const markerColor = isCritical ? '#ef4444' : isAttention ? '#f59e0b' : streamMeta.color;
 
       const html = `
-        <div style="position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+        <div style="
+          position: relative;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-width: 44px;
+          min-height: 48px;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
+        ">
           ${
             isCritical
-              ? `<div style="position: absolute; width: 36px; height: 36px; top: -5px; background: rgba(239, 68, 68, 0.4); border-radius: 9999px; animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>`
+              ? `<div style="position: absolute; width: 40px; height: 40px; top: 0px; background: rgba(239, 68, 68, 0.4); border-radius: 9999px; animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>`
               : ''
           }
           <div style="
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 9999px;
             background: #0f172a;
             border: 3px solid ${markerColor};
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.7);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #ffffff;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 800;
             font-family: monospace;
           ">
@@ -268,15 +279,16 @@ export const AreaMapView: React.FC<AreaMapViewProps> = ({
           </div>
           <div style="
             margin-top: 3px;
-            background: rgba(15, 23, 42, 0.85);
-            padding: 2px 5px;
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(15, 23, 42, 0.9);
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
             color: #e2e8f0;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 700;
             white-space: nowrap;
             letter-spacing: -0.2px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
           ">
             ${bin.code}
           </div>
@@ -286,8 +298,8 @@ export const AreaMapView: React.FC<AreaMapViewProps> = ({
       const icon = L.divIcon({
         className: 'custom-bin-marker',
         html,
-        iconSize: [32, 45],
-        iconAnchor: [16, 20],
+        iconSize: [44, 52],
+        iconAnchor: [22, 26],
       });
 
       const marker = L.marker([coords.lat, coords.lng], { icon });
@@ -567,9 +579,9 @@ export const AreaMapView: React.FC<AreaMapViewProps> = ({
             </div>
 
             {/* Current Fill Card & Adjuster */}
-            <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 space-y-3">
+            <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 space-y-3.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Fill Capacity:</span>
+                <span className="text-slate-400 font-medium">Fill Capacity:</span>
                 <span className={`font-mono font-bold text-base ${
                   selectedBin.currentFillPct >= 85 ? 'text-red-400' : 'text-emerald-400'
                 }`}>
@@ -577,22 +589,36 @@ export const AreaMapView: React.FC<AreaMapViewProps> = ({
                 </span>
               </div>
 
-              <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                <div
-                  className={`h-full ${selectedBin.currentFillPct >= 85 ? 'bg-red-500' : 'bg-emerald-500'}`}
-                  style={{ width: `${selectedBin.currentFillPct}%` }}
+              {/* Direct Interactive Touch Slider */}
+              <div className="space-y-1">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={selectedBin.currentFillPct}
+                  onChange={(e) => onUpdateBinFill(selectedBin.id, Number(e.target.value))}
+                  className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 touch-none"
                 />
+                <div className="flex justify-between text-[10px] text-slate-500 font-mono px-1">
+                  <span>0% (Empty)</span>
+                  <span>50%</span>
+                  <span>100% (Full)</span>
+                </div>
               </div>
 
-              {/* Quick Fill Adjuster Buttons */}
-              <div className="flex items-center justify-between pt-1 text-xs">
-                <span className="text-[11px] text-slate-500">Quick Fill Adjust:</span>
-                <div className="flex gap-1.5">
+              {/* Quick Fill Adjuster Buttons - Touch Sized */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-1 gap-2 text-xs">
+                <span className="text-xs text-slate-400 font-semibold">Presets:</span>
+                <div className="grid grid-cols-4 gap-1.5 w-full sm:w-auto">
                   {[25, 50, 75, 100].map((pct) => (
                     <button
                       key={pct}
                       onClick={() => onUpdateBinFill(selectedBin.id, pct)}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px]"
+                      className={`px-3 py-2 min-h-[38px] rounded-xl font-mono text-xs font-bold transition-all active:scale-95 border ${
+                        selectedBin.currentFillPct === pct
+                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700/60'
+                      }`}
                     >
                       {pct}%
                     </button>
