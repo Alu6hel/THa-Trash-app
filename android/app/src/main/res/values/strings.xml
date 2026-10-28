@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">THa Trash App</string>
+    <string name="title_activity_main">THa Trash App</string>
+    <string name="package_name">com.alu6hel.thatrashapp</string>
+    <string name="custom_url_scheme">com.alu6hel.thatrashapp</string>
+</resources>

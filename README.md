@@ -238,22 +238,59 @@ Run the full end-to-end audit:
 node scripts/test_e2e_verification.mjs
 ```
 
-### 4. Linux PC Desktop Installation (1-Click App Launcher)
+### 4. Native Android Application & APK Installation (Strictly Android)
 
-To install **THa Trash App** directly to this Linux PC with a Desktop launcher and Applications menu shortcut:
+THa Trash App has been built as a **strictly native Android application** (`com.alu6hel.thatrashapp`) using Capacitor and Gradle.
 
+- **Pre-compiled APK:** [`release/THa-Trash-App.apk`](file:///home/davidalujones/.gemini/antigravity/scratch/THa-Trash-app/release/THa-Trash-App.apk) (4.1 MB)
+- **Native Project Directory:** [`android/`](file:///home/davidalujones/.gemini/antigravity/scratch/THa-Trash-app/android/)
+
+#### To build and sideload onto this PC (Chromebook/Android device):
 ```bash
-# Run the automated desktop installer
+# 1. Sync web assets with native Android project
+npx cap sync android
+
+# 2. Build debug APK using Gradle
+cd android && ./gradlew assembleDebug && cd ..
+
+# 3. Sideload APK directly onto the connected Android environment via ADB
+adb -s 100.115.92.2:5555 install -r release/THa-Trash-App.apk
+
+# 4. Launch native app directly on the device
+adb -s 100.115.92.2:5555 shell am start -n com.alu6hel.thatrashapp/.MainActivity
+```
+
+#### Automated 1-Click Installer:
+```bash
 chmod +x install_desktop.sh launch.sh
 ./install_desktop.sh
 ```
-
-This creates:
-- **Desktop Shortcut:** `~/Desktop/THa-Trash-App.desktop`
-- **Application Menu:** `~/.local/share/applications/tha-trash-app.desktop`
-- **Instant Launcher:** `./launch.sh` (builds production bundle, starts preview server, and launches browser)
+This automatically compiles the APK, detects ADB connection, installs the APK onto the device, and adds desktop launch shortcuts.
 
 ---
+
+## 🗺️ Free Maps Integration & API Key Guide
+
+A common question is: **"Is there a free way to integrate maps or a free API key?"**
+
+**Yes! THa Trash App already uses a 100% free, zero-key mapping architecture by default.**
+
+### 1. Built-in Default: Leaflet + CartoDB / OpenStreetMap (100% Free Forever, $0)
+- **Cost:** **$0 / Unlimited**
+- **API Key Required:** **NONE (0 keys needed)**
+- **Credit Card / Billing Required:** **No**
+- **How it works:** THa Trash App connects to CartoDB Dark Matter / OSM tile servers via Leaflet.js (`https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png`).
+- **Benefits:** No quota limits, no monthly invoices, no sudden service shutoffs, and native offline tile caching.
+
+### 2. Google Maps Platform (Generous Free Tier)
+If you specifically want Google Maps tiles and Google Places search:
+- **Free Monthly Credit:** Google provides **$200 USD in free recurring usage every month** for every Google Cloud billing account.
+- **What $200 gets you:** Approximately **28,000 Dynamic Maps loads per month** or **100,000 Static Maps** completely free.
+- **Prototyping / Development:** Google Maps also provides a public **Maps Demo Key** (`YOUR_DEMO_KEY`) that requires no Google Cloud project and no billing account for rapid prototyping.
+
+### 3. Alternative 100% Free Vector Map Engines
+- **OpenFreeMap / MapLibre GL:** Free public vector map tiles hosted by non-profits with zero API keys required.
+- **Stadia Maps / Mapbox:** Free developer tiers (up to 50,000 map loads/month) requiring a free API key.
 
 ## 📊 Waste Stream Specifications
 

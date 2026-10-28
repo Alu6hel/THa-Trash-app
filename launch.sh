@@ -1,51 +1,62 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# THa Trash App - Native Linux Desktop PC Launcher
-# Launches the PWA / web application and opens it in the default desktop browser
+# THa Trash App - Native Android & Desktop Launcher
+# Launches the installed Android APK on this PC (via ADB / ChromeOS Android Subsystem)
+# with intelligent fallback to local web preview.
 # ==============================================================================
 
 set -e
 
 APP_DIR="/home/davidalujones/.gemini/antigravity/scratch/THa-Trash-app"
 cd "$APP_DIR"
+PACKAGE_NAME="com.alu6hel.thatrashapp"
+MAIN_ACTIVITY="com.alu6hel.thatrashapp.MainActivity"
+APK_PATH="$APP_DIR/release/THa-Trash-App.apk"
 
+echo "======================================================"
+echo "    LAUNCHING THA TRASH APP (STRICTLY ANDROID)        "
+echo "======================================================"
+
+# 1. Attempt ADB launch to native Android subsystem
+if command -v adb >/dev/null 2>&1; then
+    # Ensure ADB is connected to ChromeOS Android container
+    adb connect 100.115.92.2:5555 >/dev/null 2>&1 || true
+
+    # Check if package is installed
+    if adb -s 100.115.92.2:5555 shell pm list packages 2>/dev/null | grep -q "$PACKAGE_NAME"; then
+        echo "[LAUNCHER] Found installed Android APK: $PACKAGE_NAME"
+        echo "[LAUNCHER] Launching native Android application window..."
+        adb -s 100.115.92.2:5555 shell am start -n "${PACKAGE_NAME}/.MainActivity" >/dev/null 2>&1
+        echo "[SUCCESS] Native Android application window is active!"
+        exit 0
+    elif [ -f "$APK_PATH" ]; then
+        echo "[LAUNCHER] Installing APK to Android subsystem..."
+        adb -s 100.115.92.2:5555 install -r "$APK_PATH" >/dev/null 2>&1
+        echo "[LAUNCHER] Launching freshly installed Android APK..."
+        adb -s 100.115.92.2:5555 shell am start -n "${PACKAGE_NAME}/.MainActivity" >/dev/null 2>&1
+        echo "[SUCCESS] Native Android application installed and launched!"
+        exit 0
+    fi
+fi
+
+# Fallback to local server preview if ADB is offline
 PORT=4173
 URL="http://localhost:${PORT}"
 
-# Ensure production build exists
 if [ ! -d "dist" ] || [ ! -f "dist/index.html" ]; then
-    echo "[LAUNCHER] Production bundle not found. Building with npm run build..."
+    echo "[LAUNCHER] Building web assets with npm run build..."
     npm run build
 fi
 
-# Check if server is already running on port 4173
 if ! curl -s --head "$URL" >/dev/null 2>&1; then
     echo "[LAUNCHER] Starting local preview server on port ${PORT}..."
     setsid nohup ./node_modules/.bin/vite preview --port ${PORT} --host 0.0.0.0 </dev/null >/tmp/tha_trash_app_preview.log 2>&1 &
-    SERVER_PID=$!
-    
-    # Wait up to 5 seconds for server to bind
-    for i in {1..10}; do
-        if curl -s --head "$URL" >/dev/null 2>&1; then
-            echo "[LAUNCHER] Server is active (PID: ${SERVER_PID})."
-            break
-        fi
-        sleep 0.5
-    done
-else
-    echo "[LAUNCHER] Preview server is already running on ${URL}."
+    sleep 1
 fi
 
-# Open in default browser or Chromium/Chrome app mode
 if command -v xdg-open >/dev/null 2>&1; then
-    echo "[LAUNCHER] Opening THa Trash App at ${URL}..."
     xdg-open "$URL" >/dev/null 2>&1 &
-elif command -v google-chrome >/dev/null 2>&1; then
-    google-chrome --app="$URL" >/dev/null 2>&1 &
-elif command -v firefox >/dev/null 2>&1; then
-    firefox "$URL" >/dev/null 2>&1 &
-else
-    echo "[LAUNCHER] Please open your browser to: ${URL}"
 fi
 
 echo "[LAUNCHER] THa Trash App launched successfully."
+

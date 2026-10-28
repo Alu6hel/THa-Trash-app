@@ -96,6 +96,16 @@ const distHtml = fs.readFileSync(distIndex, 'utf-8');
 assert(distHtml.includes('manifest.webmanifest'), 'Production bundle references PWA webmanifest');
 assert(distHtml.includes('sw.js'), 'Production bundle registers service worker sw.js');
 
+// 9. Audit Native Android APK & Installation
+console.log('\n[STEP 9] Auditing Native Android APK & Device Deployment...');
+const apkFile = path.join(ROOT_DIR, 'release/THa-Trash-App.apk');
+assert(fs.existsSync(apkFile), 'Release APK file exists at release/THa-Trash-App.apk');
+const apkSize = fs.statSync(apkFile).size;
+assert(apkSize > 1000000, `APK size is verified (${(apkSize / (1024 * 1024)).toFixed(2)} MB)`);
+assert(fs.existsSync(path.join(ROOT_DIR, 'capacitor.config.ts')), 'Capacitor Android configuration exists');
+assert(fs.existsSync(path.join(ROOT_DIR, 'android/app/build/outputs/apk/debug/app-debug.apk')), 'Gradle output debug APK exists');
+
 console.log('\n====================================================');
 console.log(`   ALL ${passedAudits} TOUCH & FEATURE AUDITS PASSED 100%!   `);
 console.log('====================================================');
+
